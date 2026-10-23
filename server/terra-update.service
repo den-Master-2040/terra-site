@@ -1,0 +1,9 @@
+[Unit]
+Description=Обновить сайт Терра Электро из ветки deploy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=terra
+ExecStart=/usr/local/bin/terra-update

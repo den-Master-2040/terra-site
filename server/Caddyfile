@@ -1,0 +1,28 @@
+# /etc/caddy/Caddyfile
+# Caddy сам получает и продлевает сертификат Let's Encrypt для этого домена.
+# Нужно: A-запись домена → белый IP, проброшенные порты 80 и 443.
+# Домен подставляет setup-server.sh (строка ниже — шаблон).
+DEV_DOMAIN {
+	root * /var/www/terra
+
+	# служебное наружу не отдаём
+	@hidden path /.git* /.build-sha
+	respond @hidden 404
+
+	# /catalog → catalog.html
+	try_files {path} {path}.html
+	file_server
+	encode zstd gzip
+
+	# сайт в разработке: поисковикам не показываем
+	header X-Robots-Tag "noindex, nofollow"
+
+	# короткий кэш, чтобы правки были видны сразу
+	@static path *.js *.css *.woff2 *.png *.jpg *.jpeg *.webp *.svg
+	header @static Cache-Control "public, max-age=300"
+	header *.html Cache-Control "no-cache"
+
+	log {
+		output file /var/log/caddy/terra.log
+	}
+}

@@ -1,0 +1,45 @@
+# Каждый пуш в main: собрать сайт и положить готовый dist/ в ветку deploy.
+# Сервер сам забирает ветку deploy раз в минуту (server/terra-update.sh),
+# поэтому на GitHub не нужно хранить SSH-ключ от сервера.
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: npm ci
+      - run: python3 build.py
+
+      - name: Опубликовать dist в ветку deploy
+        run: |
+          cd dist
+          git init -q -b deploy
+          git config user.name  "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          echo "${GITHUB_SHA}" > .build-sha
+          git add -A
+          git commit -qm "build ${GITHUB_SHA::7}: ${{ github.event.head_commit.message || 'manual' }}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" deploy

@@ -1,0 +1,9 @@
+[Unit]
+Description=Проверять обновления сайта раз в минуту
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+
+[Install]
+WantedBy=timers.target
