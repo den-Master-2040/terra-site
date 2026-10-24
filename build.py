@@ -346,7 +346,9 @@ def home():
         for name, rng, img, href in C.SNE_SOLUTIONS)
     areas = "".join(f'<li class="area"><div class="area-top">{icon(i, "ic ic-big")}</div>'
                     f'<div class="area-label">{icon(i)}<span>{e(t)}</span></div></li>' for i, t in C.SNE_AREAS)
-    body = f"""<section class="hero"><div class="wrap">
+    body = f"""<section class="hero">
+<div class="hero-photo" role="img" aria-label="Контейнеры систем накопления энергии на бетонной площадке"></div>
+<div class="wrap">
   <div class="hero-text">
     <h1>Системы накопления <em>электрической энергии</em></h1>
     <p class="lead">Надёжные решения для управления электрической мощностью</p>
@@ -355,9 +357,7 @@ def home():
       <a class="btn btn-ghost-light" href="docs/katalog-sne.pdf" download>{icon("doc")}Скачать каталог</a>
     </div>
   </div>
-  <div class="hero-visual">
-    <img src="img/hero-sne.webp" width="1850" height="1339" alt="Контейнеры системы накопления энергии на стальном поддоне и бетонном основании">
-  </div>
+  <div class="hero-visual" aria-hidden="true"></div>
 </div></section>
 
 <section class="feat-strip"><div class="wrap"><ul>{feats}</ul></div></section>
