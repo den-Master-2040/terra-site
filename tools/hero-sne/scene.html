@@ -1,0 +1,13 @@
+<!doctype html>
+<!-- Рендер картинки для главной (static/img/hero-sne.webp).
+     Нужен npm ci (three из node_modules) и любой локальный сервер из корня репозитория:
+       python3 -m http.server 8000
+     Открыть http://localhost:8000/tools/hero-sne/scene.html?w=2800&h=2000&fmt=image/webp&cx=-21&cy=8&cz=11&tx=3&ty=-0.6&fov=44
+     Готовая картинка (обрезанная, с прозрачным фоном) — data URL в <pre id="out">, ниже показана целиком. -->
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#ededea}canvas{display:none}#out{display:none}img{max-width:100%}</style>
+<script type="importmap">{"imports":{"three":"../../node_modules/three/build/three.module.js","three/addons/":"../../node_modules/three/examples/jsm/"}}</script>
+</head><body><pre id="out"></pre><img id="result" alt="">
+<script type="module" src="scene.js"></script>
+<script>new MutationObserver(function(){var t=document.getElementById('out').textContent;if(t)document.getElementById('result').src=t;}).observe(document.getElementById('out'),{childList:true,characterData:true,subtree:true});</script>
+</body></html>

@@ -21,8 +21,9 @@
   /* тёмные блоки (главный экран, страницы товаров) одинаковы в обеих темах */
   --dark: #181817; --dark-2: #232321; --dark-line: #3a3a37; --on-dark: #f3f3ef; --on-dark-muted: #b4b4ad;
   --plate-a: #dfdfdc; --plate-b: #c6c6c2; --plate-ink: #1b1b1a; --plate-edge: #a6a6a1; --plate-line: rgba(27,27,26,.22);
-  --font-display: "Unbounded", "Golos Text", system-ui, sans-serif;
-  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* шрифт как на terra-electro.ru */
+  --font-display: "Libre Franklin", Helvetica, Arial, sans-serif;
+  --font-body: "Libre Franklin", Helvetica, Arial, sans-serif;
   --radius: 8px;
   --header-h: 68px;
   color-scheme: light;
@@ -309,8 +310,8 @@ a.logo-card:hover { border-color: var(--ink); }
 .h2 { margin-bottom: 20px; }
 
 /* =================== ГЛАВНАЯ =================== */
-/* Тёмный экран с жёлтой диагональю: текст слева, изделия справа на светлом поле, как фото в макете.
-   Светлое поле ещё и прячет неровные края вырезанных картинок (исходники маленькие). */
+/* Тёмный экран с жёлтой диагональю: текст слева, справа на светлом поле — рендер контейнеров СНЭ
+   (tools/hero-sne), как фото в макете. */
 .hero { position: relative; overflow: hidden; background: var(--dark); color: var(--on-dark); isolation: isolate; }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
   background: linear-gradient(115deg, transparent 0 46%, var(--accent) 46% 53%, #ededea 53% 100%); }
@@ -321,15 +322,12 @@ a.logo-card:hover { border-color: var(--ink); }
 .hero h1 em { font-style: normal; color: var(--accent); }
 .hero .lead { margin-top: 18px; font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem); color: var(--on-dark-muted); max-width: 34ch; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.hero-visual { position: relative; align-self: stretch; min-height: 300px; }
-.hero-visual img { position: absolute; display: block; height: auto; filter: drop-shadow(0 18px 22px rgba(0,0,0,.22)); }
-.hero-visual .hv-back { width: 92%; right: -2%; bottom: 14%; }
-.hero-visual .hv-front { width: 34%; left: 2%; bottom: 2%; }
-.hero-visual::after { content: ""; position: absolute; left: 0; right: 0; bottom: 4%; height: 14%; z-index: -1; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.28), transparent); }
+.hero-visual { position: relative; align-self: end; }
+.hero-visual img { display: block; width: 112%; max-width: none; height: auto; margin: 0 -6% -8% -4%; }
 @media (max-width: 860px) {
   .hero::before { background: linear-gradient(160deg, transparent 0 63%, var(--accent) 63% 66%, #ededea 66% 100%); }
   .hero .wrap { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-  .hero-visual { min-height: 0; aspect-ratio: 16 / 10; }
+  .hero-visual img { width: 100%; margin: 0 0 -6%; }
 }
 
 /* Полоса преимуществ */
@@ -371,14 +369,14 @@ a.logo-card:hover { border-color: var(--ink); }
 .sol-card { display: grid; grid-template-columns: minmax(0, 45%) minmax(0, 1fr); height: 100%; min-height: 168px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); text-decoration: none; overflow: hidden; box-shadow: 0 6px 20px var(--shade); transition: border-color .15s; }
 .sol-card .ph { border-radius: 0; background: var(--surface); transition: background-color .2s; }
 .sol-card .ph img { padding: 12px; }
-.sol-card.is-lead .ph, .sol-card:hover .ph { background: var(--accent); }
+.sol-card:hover .ph { background: var(--accent); }
 .sol-card:hover { border-color: var(--ink); }
 .sol-body { display: grid; grid-template-rows: auto auto 1fr; gap: 8px; padding: 18px; }
 .sol-body h3 { font: 600 1.0625rem/1.3 var(--font-body); }
 .sol-body p { color: var(--muted); font-size: .9375rem; font-variant-numeric: tabular-nums; }
 .round { justify-self: end; align-self: end; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); transition: background-color .15s, border-color .15s; }
 .round .ic { width: 18px; height: 18px; stroke-width: 2; }
-.sol-card.is-lead .round, .sol-card:hover .round, .m-card:hover .round { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.sol-card:hover .round, .m-card:hover .round { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
 /* Ключевые возможности */
 .abilities { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); list-style: none; padding: 0; }

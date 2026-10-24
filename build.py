@@ -35,15 +35,10 @@ def build_assets():
                     "--target=es2018", "--outfile=dist/assets/js/motor.js", "--log-level=warning"], cwd=ROOT, check=True)
     shutil.copy(ROOT / "src/js/site.js", DIST / "assets/js/site.js")
     shutil.copy(ROOT / "src/css/site.css", DIST / "assets/css/site.css")
-    faces = []
-    for fam, pkg in [("Golos Text", "golos-text"), ("Unbounded", "unbounded")]:
-        for w in (400, 500, 600):
-            for subset, rng in [("cyrillic", "U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116"),
-                                ("latin", "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD")]:
-                fn = f"{pkg}-{subset}-{w}-normal.woff2"
-                shutil.copy(NM / "@fontsource" / pkg / "files" / fn, DIST / "assets/fonts" / fn)
-                faces.append(f"@font-face{{font-family:'{fam}';font-style:normal;font-display:swap;font-weight:{w};"
-                             f"src:url({fn}) format('woff2');unicode-range:{rng}}}")
+    # Шрифт как на terra-electro.ru — Libre Franklin с Google Fonts (в этой версии есть кириллица).
+    # Файлы лежат в static/assets/fonts и уже скопированы в dist вместе со static/.
+    faces = [f"@font-face{{font-family:'Libre Franklin';font-style:normal;font-display:swap;font-weight:{w};"
+             f"src:url(libre-franklin-{w}.woff2) format('woff2')}}" for w in (400, 500, 600, 700, 800)]
     (DIST / "assets/fonts/fonts.css").write_text("\n".join(faces) + "\n", encoding="utf-8")
 
 
@@ -144,7 +139,7 @@ def head(title, desc, redirect=False):
 <meta name="description" content="{e(desc)}">
 <link rel="icon" href="img/favicon.png">
 <script>(function(){{try{{if(localStorage.getItem('te-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})();</script>
-{redir}<link rel="stylesheet" href="assets/fonts/fonts.css">
+{redir}<link rel="stylesheet" href="assets/fonts/fonts.css?v={version("static/assets/fonts/libre-franklin-400.woff2")}">
 <link rel="stylesheet" href="assets/css/site.css?v={version("src/css/site.css")}">
 </head>
 <body>
@@ -346,9 +341,9 @@ def cta_band():
 def home():
     feats = "".join(f"<li>{icon(i)}<span>{e(t)}</span></li>" for i, t in C.SNE_FEATURES)
     sols = "".join(
-        f'<li><a class="sol-card{" is-lead" if n == 0 else ""}" href="{href}">{ph(img, name)}'
+        f'<li><a class="sol-card" href="{href}">{ph(img, name)}'
         f'<div class="sol-body"><h3>{e(name)}</h3><p>{e(rng)}</p><span class="round">{icon("arrow")}</span></div></a></li>'
-        for n, (name, rng, img, href) in enumerate(C.SNE_SOLUTIONS))
+        for name, rng, img, href in C.SNE_SOLUTIONS)
     areas = "".join(f'<li class="area"><div class="area-top">{icon(i, "ic ic-big")}</div>'
                     f'<div class="area-label">{icon(i)}<span>{e(t)}</span></div></li>' for i, t in C.SNE_AREAS)
     body = f"""<section class="hero"><div class="wrap">
@@ -360,9 +355,8 @@ def home():
       <a class="btn btn-ghost-light" href="docs/katalog-sne.pdf" download>{icon("doc")}Скачать каталог</a>
     </div>
   </div>
-  <div class="hero-visual" aria-hidden="true">
-    <img class="hv-back" src="img/sne-container.png" alt="">
-    <img class="hv-front" src="img/sne-cab-liquid.png" alt="">
+  <div class="hero-visual">
+    <img src="img/hero-sne.webp" width="1850" height="1339" alt="Контейнеры системы накопления энергии на стальном поддоне и бетонном основании">
   </div>
 </div></section>
 
