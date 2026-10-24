@@ -87,6 +87,38 @@ def ph(img, alt="", cls=""):
     return (f'<div class="ph {cls}"><img src="img/{e(img)}" alt="{e(alt)}" loading="lazy" decoding="async"></div>')
 
 
+# Линейные иконки 24×24: обводка цветом текста, элементы с классом ac — жёлтым акцентом
+ICONS = {
+    "shield": '<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path class="ac" d="M8.5 12l2.5 2.5 4.5-5"/>',
+    "bars": '<path d="M3 21h18"/><path class="ac" d="M5 18v-5h3v5z"/><path d="M10.5 18V9h3v9z"/><path class="ac" d="M16 18V5h3v13z"/>',
+    "gear": '<circle cx="12" cy="12" r="6.5"/><circle class="ac" cx="12" cy="12" r="2.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+    "leaf": '<path d="M5 20c0-9 5-14 15-15 0 9.5-5 15-14 15"/><path class="ac" d="M4 21c3-5 7-9 11-11"/>',
+    "bolt": '<path class="ac" d="M13 2L5 13.5h6L10 22l8-11.5h-6z"/>',
+    "wave": '<path class="ac" d="M2 12h3l2.5-6 3.5 12 3-9 2 5 1.5-2H22"/>',
+    "turbine": '<path d="M12 10.5V22M9 22h6"/><circle cx="12" cy="9" r="1.4"/><path class="ac" d="M12 7.6V2M13.2 9.7l4.8 2.8M10.8 9.7L6 12.5"/>',
+    "factory": '<path d="M3 21V11l5 3v-3l5 3V4h4v17"/><path d="M2 21h20"/><path class="ac" d="M6.5 17.5h2M10.5 17.5h2M14.5 17.5h2"/>',
+    "building": '<path d="M5 21V3h10v18M15 8h4v13M3 21h18"/><path class="ac" d="M8 7h1M11 7h1M8 11h1M11 11h1M8 15h1M11 15h1"/>',
+    "server": '<rect x="4" y="3" width="16" height="6" rx="1"/><rect x="4" y="11" width="16" height="6" rx="1"/><path d="M8 17v4M16 17v4"/><path class="ac" d="M7 6h1M7 14h1M12 6h5M12 14h5"/>',
+    "ship": '<path d="M3 15l2 4h14l2-4z"/><path d="M6 15v-4h12v4M9 11V7h6v4M12 7V3"/><path class="ac" d="M2 22c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1 2-1 4-1"/>',
+    "doc": '<path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4"/><path class="ac" d="M9 11h7M9 15h7M9 19h4"/>',
+    "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    "download": '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+    "pylon": '<path d="M12 2L7 22M12 2l5 20M5 6h14M9 10h6M8 15h8M7.3 19h9.4"/>',
+    "battery": '<rect x="4" y="6" width="16" height="15" rx="1.5"/><path d="M8 3v3M16 3v3"/><path class="ac" d="M9 11v5M6.5 13.5h5M14 13.5h4"/>',
+    "monitor": '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M9 20h6M12 16v4"/><path class="ac" d="M6 13l4-4 3 2 4-5"/>',
+    "chip": '<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/><path class="ac" d="M10 10h4v4h-4z"/>',
+    "pcs": '<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M5 19L19 5"/><path class="ac" d="M6 9c1.5-2 3-2 4.5 0M13.5 15h5M13.5 17.5h5"/>',
+}
+
+
+def icon(name, cls="ic"):
+    return f'<svg class="{cls}" viewBox="0 0 24 24" aria-hidden="true">{ICONS[name]}</svg>'
+
+
+def arrow_link(text, href, cls="more"):
+    return f'<a class="{cls}" href="{href}">{e(text)}{icon("arrow", "ic ic-arrow")}</a>'
+
+
 def topic_link(name, page="catalog.html"):
     return f'{page}?topic={urllib.parse.quote(name)}#request'
 
@@ -113,7 +145,7 @@ def head(title, desc, redirect=False):
 """
 
 
-def header(current):
+def header(current, cta="#request"):
     items = []
     for href, name, subs in C.MENU:
         cur = ' aria-current="page"' if current in [href] + [s[0] for s in subs] else ""
@@ -126,7 +158,6 @@ def header(current):
   <span class="tagline">{e(C.TAGLINE)}</span>
   <a class="phone-top" href="tel:{C.PHONE_TEL}">{C.PHONE}</a>
   <a class="email" href="mailto:{C.EMAIL}">{C.EMAIL}</a>
-  <a class="btn-3d" href="landing.html">Двигатель в 3D</a>
   <button class="theme-toggle" type="button" aria-pressed="false">
     <svg class="ic-moon" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     <svg class="ic-sun" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></g></svg>
@@ -139,6 +170,7 @@ def header(current):
     <span class="brand-text" hidden>Терра Электро</span>
   </a>
   <nav class="nav" id="nav" aria-label="Разделы сайта"><ul>{''.join(items)}</ul></nav>
+  <a class="btn btn-primary btn-cta" href="{cta}">Связаться с нами</a>
   <button class="burger" type="button" aria-label="Меню" aria-controls="nav" aria-expanded="false"><span></span><span></span><span></span></button>
 </div></header>
 """
@@ -171,7 +203,7 @@ def footer(scripts=""):
   <div class="footer-grid">
     <div><a class="brand" href="index.html?site"><img src="img/logo.png" alt="Терра Электро" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="brand-text" hidden>Терра Электро</span></a>
       <p>{e(C.TAGLINE)}</p></div>
-    <ul class="footer-nav">{links}<li><a href="landing.html">Двигатель в 3D</a></li></ul>
+    <ul class="footer-nav">{links}</ul>
     <div class="footer-contacts">
       <a href="tel:{C.PHONE_TEL}">{C.PHONE}</a>
       <a href="mailto:{C.EMAIL}">{C.EMAIL}</a>
@@ -240,53 +272,122 @@ def write(name, html_text):
 
 
 def page(name, title, desc, body, current=None, request=True, request_title="Отправить запрос", scripts="", redirect=False):
-    write(name, head(title, desc, redirect) + header(current or name) + "<main>\n" + body +
+    write(name, head(title, desc, redirect) + header(current or name, "#request" if request else "contacts.html#request") + "<main>\n" + body +
           (request_block(request_title) if request else "") + "</main>\n" + footer(scripts))
+
+
+# ------------------------------------------------------------------ СНЭ: общие блоки
+def sne_diagram():
+    """Схема «сеть — преобразователь — батарея» с EMS и BMS. Иконки те же, что в ICONS."""
+    def ic(name, x, y, size=40):
+        return f'<svg x="{x}" y="{y}" width="{size}" height="{size}" viewBox="0 0 24 24" class="dg-ic">{ICONS[name]}</svg>'
+    def label(x, y, lines, anchor="start"):
+        return "".join(f'<text x="{x}" y="{y + i * 19}" text-anchor="{anchor}">{e(t)}</text>' for i, t in enumerate(lines))
+    return f"""<svg class="sne-diagram" viewBox="0 0 600 350" role="img" aria-label="Состав СНЭ: сеть и потребитель, силовой преобразователь PCS, аккумуляторная батарея, системы управления EMS и BMS">
+  <path class="dg-line" d="M70 52H470M240 52V118M240 182V222"/>
+  <path class="dg-flow" d="M222 66v40M216 72l6-7 6 7M216 100l6 7 6-7M222 190v24M216 196l6-7 6 7M216 208l6 7 6-7"/>
+  <path class="dg-dash" d="M272 150H360M320 150V250H360"/>
+  {ic("pylon", 24, 24, 44)}{label(84, 40, ["Сеть"])}
+  {ic("factory", 474, 26, 44)}{label(496, 98, ["Потребитель"], "middle")}
+  <rect class="dg-box" x="208" y="118" width="64" height="64" rx="4"/>{ic("pcs", 220, 130, 40)}
+  {label(196, 136, ["Силовой", "преобразователь", "(PCS)"], "end")}
+  <rect class="dg-box" x="216" y="222" width="48" height="56" rx="4"/>{ic("battery", 220, 230, 40)}
+  {label(240, 304, ["Аккумуляторная", "батарея"], "middle")}
+  <rect class="dg-box" x="360" y="126" width="48" height="48" rx="4"/>{ic("monitor", 366, 132, 36)}
+  {label(420, 146, ["Система управления", "энергией (EMS)"])}
+  <rect class="dg-box" x="360" y="226" width="48" height="48" rx="4"/>{ic("chip", 366, 232, 36)}
+  {label(420, 246, ["Система управления", "батареями (BMS)"])}
+</svg>"""
+
+
+def sne_functions(full=False):
+    items = C.SNE_FUNCTIONS
+    if full:
+        body = "".join(f'<li>{icon(i)}<div><b>{e(t)}</b><span>{e(d)}</span></div></li>' for i, t, d in items)
+        t, d = C.SNE_FUNCTION_EXTRA
+        body += f'<li>{icon("wave")}<div><b>{e(t)}</b><span>{e(d)}</span></div></li>'
+        return f'<ul class="abilities full">{body}</ul>'
+    return '<ul class="abilities">' + "".join(f'<li>{icon(i)}<span>{e(t)}</span></li>' for i, t, _ in items) + "</ul>"
+
+
+def sne_about_block(more=True):
+    btn = arrow_link("Подробнее", "sne.html#about", "btn btn-primary") if more else ""
+    return f"""<div class="what">
+  <div class="what-text">
+    <h2>Что такое СНЭ?</h2>
+    <p class="lead">{e(C.SNE_LEAD)}</p>
+    {btn}
+  </div>
+  {sne_diagram()}
+</div>"""
+
+
+def cta_band():
+    pts = [("gear", "Индивидуальные решения"), ("doc", "Техническое сопровождение"), ("bars", "Полный цикл реализации")]
+    pts_html = "".join(f"<li>{icon(i)}<span>{e(t)}</span></li>" for i, t in pts)
+    return f"""<section class="cta-band"><div class="wrap">
+  <div class="cta-text">
+    <h2>Инженерные решения от «Терра Электро»</h2>
+    <p>От проектирования до внедрения</p>
+    {arrow_link("Отправить запрос", "#request", "btn btn-primary")}
+  </div>
+  <ul class="cta-points">{pts_html}</ul>
+</div></section>
+"""
 
 
 # ------------------------------------------------------------------ страницы
 def home():
-    body = f"""<section class="home-hero"><div class="wrap">
-  <div>
-    <h1>Производство, поставка и наладка электротехники</h1>
-    <p class="lead">Поставляем оборудование мировых производителей, собираем щиты на своём участке и запускаем всё на объекте.</p>
-    <div class="actions"><a class="btn btn-primary" href="catalog.html">Каталог продукции</a><a class="btn btn-ghost" href="#request">Отправить запрос</a></div>
-    <p class="facts"><span><b>Более 10 лет</b> в России и СНГ</span><span>Работаем по <b>44‑ФЗ, 223‑ФЗ, 275‑ФЗ</b></span></p>
+    feats = "".join(f"<li>{icon(i)}<span>{e(t)}</span></li>" for i, t in C.SNE_FEATURES)
+    sols = "".join(
+        f'<li><a class="sol-card{" is-lead" if n == 0 else ""}" href="{href}">{ph(img, name)}'
+        f'<div class="sol-body"><h3>{e(name)}</h3><p>{e(rng)}</p><span class="round">{icon("arrow")}</span></div></a></li>'
+        for n, (name, rng, img, href) in enumerate(C.SNE_SOLUTIONS))
+    areas = "".join(f'<li class="area"><div class="area-top">{icon(i, "ic ic-big")}</div>'
+                    f'<div class="area-label">{icon(i)}<span>{e(t)}</span></div></li>' for i, t in C.SNE_AREAS)
+    body = f"""<section class="hero"><div class="wrap">
+  <div class="hero-text">
+    <h1>Системы накопления <em>электрической энергии</em></h1>
+    <p class="lead">Надёжные решения для управления электрической мощностью</p>
+    <div class="actions">
+      {arrow_link("Подобрать решение", "sne.html", "btn btn-primary")}
+      <a class="btn btn-ghost-light" href="docs/katalog-sne.pdf" download>{icon("doc")}Скачать каталог</a>
+    </div>
   </div>
-  <a class="hero-motor" href="landing.html"><img src="assets/img/motor.png" alt="Асинхронный электродвигатель" width="1200" height="800"><span class="badge">Разобрать двигатель в 3D</span></a>
+  <div class="hero-visual" aria-hidden="true">
+    <img class="hv-back" src="img/sne-container.png" alt="">
+    <img class="hv-front" src="img/sne-cab-liquid.png" alt="">
+  </div>
 </div></section>
 
-<section class="section band"><div class="wrap">
-  <div class="section-head"><h2>Основная продукция</h2><a class="more" href="catalog.html">Весь каталог</a></div>
-  {tiles()}
-</div></section>
+<section class="feat-strip"><div class="wrap"><ul>{feats}</ul></div></section>
+
+<section class="section what-section"><div class="wrap">{sne_about_block()}</div></section>
 
 <section class="section"><div class="wrap">
-  <div class="section-head"><h2>Основные направления</h2></div>
+  <div class="row-head"><h2>Наши решения</h2>{arrow_link("Весь каталог", "sne.html")}</div>
+  <ul class="solutions">{sols}</ul>
+</div></section>
+
+<section class="section tight"><div class="wrap">
+  <div class="row-head"><h2>Ключевые возможности</h2>{arrow_link("Все функции", "sne.html#functions")}</div>
+  {sne_functions()}
+</div></section>
+
+<section class="section tight"><div class="wrap">
+  <div class="row-head"><h2>Области применения</h2></div>
+  <ul class="areas">{areas}</ul>
+</div></section>
+
+<section class="section tight"><div class="wrap">
+  <div class="row-head"><h2>Другие направления</h2>{arrow_link("Весь каталог", "catalog.html")}</div>
   {directions()}
 </div></section>
 
-<section class="section band"><div class="wrap">
-  <div class="section-head"><h2>Наши преимущества</h2></div>
-  {advantages()}
-</div></section>
-
-<section class="section"><div class="wrap">
-  <div class="section-head"><h2>Основные производители</h2><a class="more" href="brands.html">Все производители</a></div>
-  {brand_logos()}
-</div></section>
-
-<section class="section band"><div class="wrap">
-  <div class="section-head"><h2>Новости компании</h2><a class="more" href="news.html">Все новости</a></div>
-  {news_cards(C.NEWS[:4])}
-</div></section>
-
-<section class="section"><div class="wrap">
-  <div class="section-head"><h2>Основные заказчики</h2><p>Предприятия России, Казахстана и Беларуси.</p></div>
-  {clients()}
-</div></section>
-"""
-    page("index.html", "Терра Электро", C.TAGLINE + ". Санкт-Петербург, доставка по России и СНГ.", body, redirect=True)
+{cta_band()}"""
+    page("index.html", "Терра Электро — системы накопления энергии",
+         "Системы накопления электрической энергии, быстродействующий АВР, аккумуляторные контейнеры. " + C.TAGLINE + ".",
+         body, request_title="Отправить запрос")
 
 
 def catalog():
@@ -314,13 +415,182 @@ def catalog():
     page("catalog.html", "Каталог — Терра Электро", "Трансформаторы, электродвигатели, автоматика, преобразователи, кабель, РЗА, ИБП и шкафы.", body)
 
 
-def motors():
+def sne_cat_tokens(cat):
+    return f"{cat} snte" if cat in ("air", "liquid") else cat
+
+
+def sne_catalog():
+    tabs = "".join(f'<button type="button" data-filter="{k}" aria-pressed="{"true" if k == "all" else "false"}">{e(t)}</button>'
+                   for k, t in C.SNE_FILTERS)
     cards = []
-    for name, img, specs in C.MOTORS:
-        dl = "".join(f"<dt>{e(k)}</dt><dd>{e(v)}</dd>" for k, v in specs)
-        cards.append(f'<li><article class="product">{ph(img, name)}<h3>{e(name)}</h3><dl class="specs">{dl}</dl>'
-                     f'<div class="product-foot"><span class="price">Цена по запросу</span>'
-                     f'<a class="btn btn-primary btn-small" href="#request" data-topic="{e(name)}">Запросить</a></div></article></li>')
+    for s in C.SNE_SERIES:
+        for n, m in enumerate(s["models"], 1):
+            bullets = "".join(f"<li>{e(b.format(**m))}</li>" for b in s["card"])
+            cards.append(f'<li data-cat="{sne_cat_tokens(s["cat"])}"><article class="p-card">{ph(m["img"], m["name"])}'
+                         f'<h3>{e(m["name"])}</h3><p class="p-type">{e(s["short"])}</p><ul class="p-points">{bullets}</ul>'
+                         f'<div class="p-foot"><span class="price">Цена по запросу</span>'
+                         f'<a class="btn btn-dark btn-small stretched" href="{s["page"]}#m{n}">Подробнее</a></div></article></li>')
+    parts = "".join(f"<li><b>{e(t)}</b><span>{e(d)}</span></li>" for t, d in C.SNE_PARTS)
+    about = "".join(f"<p>{e(x)}</p>" for x in C.SNE_ABOUT)
+    eng = "".join(f"<p>{e(x)}</p>" for x in C.SNE_ENGINEERING)
+    body = f"""<section class="cat-head blueprint"><div class="wrap">
+  <ol class="crumbs" aria-label="Навигационная цепочка"><li><a href="index.html">Главная</a></li><li aria-current="page">Системы накопления энергии</li></ol>
+  <h1>Каталог систем накопления энергии (СНЭ)</h1>
+  <p class="lead">Комплексные решения для промышленных и коммерческих объектов</p>
+  <div class="seg-tabs" role="group" aria-label="Тип оборудования">{tabs}</div>
+</div></section>
+
+<section class="section cat-body blueprint"><div class="wrap">
+  <ul class="p-grid">{''.join(cards)}</ul>
+  <p class="cat-empty" hidden>В этой группе пока нет моделей.</p>
+</div></section>
+
+<section class="section band" id="about"><div class="wrap">
+  {sne_about_block(more=False)}
+  <div class="about-cols">
+    <div class="prose">{about}</div>
+    <div><h3 class="sub-h">Состав батарейной СНЭ</h3><ul class="parts">{parts}</ul></div>
+  </div>
+</div></section>
+
+<section class="section" id="functions"><div class="wrap">
+  <div class="row-head"><h2>Функции СНЭ</h2></div>
+  {sne_functions(full=True)}
+</div></section>
+
+<section class="section band"><div class="wrap">
+  <div class="about-cols">
+    <div><h2 class="h2">Инженерные решения «Терра Электро»</h2></div>
+    <div class="prose">{eng}
+      <p><a class="btn btn-ghost" href="docs/katalog-sne.pdf" download>{icon("download")}Скачать каталог СНЭ (PDF)</a></p></div>
+  </div>
+</div></section>
+"""
+    page("sne.html", "Системы накопления энергии — Терра Электро",
+         "Каталог СНЭ: шкафы СНТЭ с воздушным и жидкостным охлаждением, БАВРТЭ, аккумуляторные контейнеры НТЭ.",
+         body, request_title="Подобрать систему накопления")
+
+
+def product_hero(crumbs, title, accent, lead, img, actions, extra="", tag="", mono=False):
+    """Тёмный главный экран страницы товара: текст слева, изделие справа."""
+    cr = '<li><a href="index.html">Главная</a></li>' + "".join(
+        f'<li><a href="{h}">{e(n)}</a></li>' if h else f'<li aria-current="page">{e(n)}</li>' for h, n in crumbs)
+    tag_html = f'<span class="pv-tag">{e(tag)}</span>' if tag else ""
+    return f"""<section class="p-hero"><div class="wrap">
+  <div class="p-hero-text">
+    <ol class="crumbs" aria-label="Навигационная цепочка">{cr}</ol>
+    <h1>{e(title)}</h1>
+    <p class="p-accent">{e(accent)}</p>
+    <p class="lead">{e(lead)}</p>
+    {extra}
+    <div class="actions">{actions}</div>
+  </div>
+  <div class="p-visual{" mono" if mono else ""}"><img src="img/{e(img)}" alt="{e(title)}">{tag_html}</div>
+</div></section>
+"""
+
+
+def bavr_wave():
+    """Две синусоиды: сеть и резерв, между ними — время переключения."""
+    return """<svg class="bavr-wave" viewBox="0 0 320 90" role="img" aria-label="Переключение с основного источника на резервный менее чем за 20 мс">
+  <path class="w1" d="M10 50c12-38 28-38 40 0s28 38 40 0"/>
+  <path class="w2" d="M130 50c12-38 28-38 40 0s28 38 40 0 28-38 40 0 28 38 40 0"/>
+  <path class="wx" d="M10 50h300M90 14v72M130 14v72M94 20h32M94 20l5-4M94 20l5 4M126 20l-5-4M126 20l-5 4"/>
+  <text x="110" y="10" text-anchor="middle">&lt; 20 мс</text>
+</svg>"""
+
+
+def sne_table(cols, models):
+    groups = [g for g, _, _ in cols]
+    labels = "".join(f'<th scope="col">{e(x)}</th>' for _, _, x in cols)
+    if any(groups):
+        top, i = [], 0
+        while i < len(cols):
+            j = i
+            while j < len(cols) and cols[j][0] == cols[i][0]:
+                j += 1
+            top.append(f'<th scope="colgroup" colspan="{j - i}">{e(cols[i][0])}</th>')
+            i = j
+        thead = (f'<tr><th scope="col" rowspan="2" class="sticky">Наименование</th>{"".join(top)}</tr>'
+                 f'<tr>{labels}</tr>')
+    else:
+        thead = f'<tr><th scope="col" class="sticky">Наименование</th>{labels}</tr>'
+    rows, wrap_attr = [], ' class="wrap"'  # длинным значениям разрешаем перенос
+    for n, m in enumerate(models, 1):
+        tds = "".join(f'<td{wrap_attr if len(m[k]) > 16 else ""}>{e(m[k]).replace(" + ", "<br>+ ")}</td>' for _, k, _ in cols)
+        rows.append(f'<tr id="m{n}"><th scope="row" class="sticky">{e(m["name"])}</th>{tds}</tr>')
+    return f'<div class="mt-wrap" tabindex="0" role="region" aria-label="Таблица моделей"><table class="mt"><thead>{thead}</thead><tbody>{"".join(rows)}</tbody></table></div>'
+
+
+def code_card(s):
+    segs = []
+    for n, (txt, num) in enumerate(s["code"]):
+        prev = s["code"][n - 1][0] if n else None
+        if n and txt != "/" and prev != "/":
+            segs.append('<span class="sep">-</span>')
+        segs.append(f'<span class="sep">/</span>' if num is None else f'<span class="seg">{e(txt)}<sup>{num}</sup></span>')
+    subs = {
+        "volt": ", ".join(f"{k} — {v}" for k, v in C.VOLT_CODES),
+        "cool": ", ".join(f"{k} — {v}" for k, v in C.COOL_CODES),
+    }
+    legend = []
+    for num, text, sub in s["legend"]:
+        extra = ""
+        if sub == "climate":
+            extra = '<ul class="climate">' + "".join(f"<li><b>{k}</b> {e(c)} — {e(d)}</li>" for k, c, d in C.CLIMATE) + "</ul>"
+        elif sub:
+            extra = f"<small>{e(subs[sub])}</small>"
+        legend.append(f'<li><span class="num">{num}</span><div>{e(text)}{extra}</div></li>')
+    ex, ex_text = s["example"]
+    return f"""<aside class="code-card" aria-labelledby="code-title">
+  <h2 id="code-title">Структура условного обозначения</h2>
+  <p class="code-line">{''.join(segs)}</p>
+  <ol class="legend">{''.join(legend)}</ol>
+  <p class="code-ex">Пример: <b>{e(ex)}</b> — {e(ex_text)}.</p>
+</aside>"""
+
+
+def other_series(current):
+    items = "".join(f'<li><a class="mini-card" href="{s["page"]}">{ph(s["img"], s["title"])}<span>{e(s["title"])}</span></a></li>'
+                    for s in C.SNE_SERIES if s["page"] != current)
+    return f"""<section class="section tight"><div class="wrap">
+  <div class="row-head"><h2>Другие серии</h2>{arrow_link("Весь каталог", "sne.html")}</div>
+  <ul class="mini-cards">{items}</ul>
+</div></section>
+"""
+
+
+def sne_series(s):
+    num, cap = s["stat"]
+    extra = f'<div class="p-stats">{bavr_wave() if s["cat"] == "bavr" else ""}<div class="stat"><b>{e(num)}</b><span>{e(cap)}</span></div></div>'
+    actions = (f'<a class="btn btn-primary" href="#request" data-topic="{e(s["title"])}">Получить ТКП</a>'
+               f'<a class="btn btn-ghost-light" href="docs/katalog-sne.pdf" download>{icon("doc")}Скачать каталог</a>')
+    adv = ""
+    if s["adv"]:
+        adv = ('<section class="section tight band"><div class="wrap"><div class="row-head"><h2>Преимущества</h2></div><ul class="adv-list">'
+               + "".join(f"<li><b>{e(t)}</b><span>{e(d)}</span></li>" for t, d in s["adv"]) + "</ul></div></section>\n")
+    text = "".join(f"<p>{e(x)}</p>" for x in s["text"])
+    text_html = f'<div class="prose spec-note">{text}</div>' if text else ""
+    body = product_hero([("sne.html", "Системы накопления"), (None, s["title"])], s["title"], s["accent"], s["lead"],
+                        s["img"], actions, extra, tag=s["models"][0]["name"].split("-")[0]) + f"""
+<section class="section spec-section"><div class="wrap">
+  <div class="spec-grid">
+    <div class="spec-main">
+      <h2 class="h2">Технические характеристики</h2>
+      {sne_table(s["cols"], s["models"])}
+      {text_html}
+    </div>
+    {code_card(s)}
+  </div>
+</div></section>
+{adv}{other_series(s["page"])}"""
+    page(s["page"], f'{s["title"]} — Терра Электро', s["lead"], body, current=s["page"],
+         request_title="Запросить технико-коммерческое предложение")
+
+
+def motors():
+    cards = "".join(f'<li><a class="m-card" href="dvigatel-{slug}.html">{ph(img, name, "mono")}<h3>{e(name)}</h3>'
+                    f'<span class="round">{icon("arrow")}</span></a></li>' for slug, name, img, _, _ in C.MOTORS)
     sol = [("Подбор аналогов", "Найдём замену снятому с производства или импортному двигателю с теми же присоединительными размерами."),
            ("Индивидуальные решения", "Подберём исполнение под ваш режим работы, среду и способ монтажа."),
            ("Техническое сопровождение", "Консультируем при подборе, монтаже и пусконаладке.")]
@@ -331,11 +601,10 @@ def motors():
   <div class="prose">
     <p>Широкий выбор электродвигателей для разных промышленных задач и условий эксплуатации: насосы, вентиляторы, компрессоры, конвейеры, краны, станки, дробилки, мешалки, сушилки, упаковочные и технологические линии.</p>
     <p>Работаем с предприятиями нефтегазовой и нефтехимической отрасли, угольной и горнодобывающей промышленности, металлургии, энергетики и цементного производства.</p>
-    <p><a href="landing.html">Посмотрите, как устроен асинхронный двигатель, в 3D</a></p>
   </div>
 </div></section>
 <section class="section band"><div class="wrap">
-  <ul class="products">{''.join(cards)}</ul>
+  <ul class="m-grid">{cards}</ul>
 </div></section>
 <section class="section"><div class="wrap">
   <div class="section-head"><h2>Наши решения — ваш результат</h2></div>
@@ -345,6 +614,34 @@ def motors():
     page("elektrodvigateli.html", "Электродвигатели — Терра Электро",
          "Асинхронные, синхронные, взрывозащищённые, высоковольтные и двигатели постоянного тока.",
          body, request_title="Нужен подбор электродвигателя?")
+    for m in C.MOTORS:
+        motor_page(*m)
+
+
+def motor_page(slug, name, img, text, specs):
+    power = dict(specs).get("Мощность", "")
+    actions = (f'<a class="btn btn-primary" href="#request" data-topic="{e(name)}">Запросить цену</a>'
+               f'<a class="btn btn-ghost-light" href="elektrodvigateli.html">Все электродвигатели</a>')
+    rows = "".join(f'<tr><th scope="row">{e(k)}</th><td>{e(v)}</td></tr>' for k, v in specs)
+    others = "".join(f'<li><a href="dvigatel-{s}.html">{e(n)}</a></li>' for s, n, _, _, _ in C.MOTORS if s != slug)
+    body = product_hero([("catalog.html", "Каталог"), ("elektrodvigateli.html", "Электродвигатели"), (None, name)],
+                        name, f"Мощность {power}" if power else "", text, img, actions, mono=True) + f"""
+<section class="section spec-section"><div class="wrap">
+  <div class="spec-grid">
+    <div class="spec-main">
+      <h2 class="h2">Технические характеристики</h2>
+      <div class="mt-wrap"><table class="mt mt-pairs"><tbody>{rows}</tbody></table></div>
+      <p class="spec-note">Точные параметры конкретной модели уточним при подборе: пришлите данные с шильдика или техзадание.</p>
+    </div>
+    <aside class="code-card" aria-labelledby="others-title">
+      <h2 id="others-title">Другие типы двигателей</h2>
+      <ul class="others">{others}</ul>
+    </aside>
+  </div>
+</div></section>
+"""
+    page(f"dvigatel-{slug}.html", f"{name} — Терра Электро", text, body, current="elektrodvigateli.html",
+         request_title="Запросить подбор и цену")
 
 
 def brands():
@@ -614,8 +911,10 @@ def main():
     shutil.copytree(ROOT / "static", DIST, ignore=shutil.ignore_patterns(".gitkeep"))
     build_assets()
     write_fetch_script()
-    for f in (home, catalog, motors, brands, sgp, proizvodstvo, podstantsii, ktpp, nizkovoltnoye, inzhiniring, news, company, contacts, landing):
+    for f in (home, sne_catalog, catalog, motors, brands, sgp, proizvodstvo, podstantsii, ktpp, nizkovoltnoye, inzhiniring, news, company, contacts, landing):
         f()
+    for series in C.SNE_SERIES:
+        sne_series(series)
     print("ok:", ", ".join(sorted(p.name for p in DIST.glob("*.html"))))
 
 

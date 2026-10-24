@@ -73,6 +73,37 @@
     });
   });
 
+  /* ---- Каталог СНЭ: фильтр по группам, ?cat=air открывает сразу нужную группу ---- */
+  var tabs = document.querySelectorAll('.seg-tabs [data-filter]');
+  var cards = document.querySelectorAll('.p-grid > li[data-cat]');
+  var empty = document.querySelector('.cat-empty');
+  function applyFilter(key) {
+    var shown = 0;
+    tabs.forEach(function (t) {
+      var f = t.getAttribute('data-filter');
+      // snte (с главной) = оба вида шкафов, подсвечиваем обе вкладки
+      var on = f === key || (key === 'snte' && (f === 'air' || f === 'liquid'));
+      t.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    cards.forEach(function (li) {
+      var ok = key === 'all' || li.getAttribute('data-cat').split(' ').indexOf(key) >= 0;
+      li.hidden = !ok;
+      if (ok) shown++;
+    });
+    if (empty) empty.hidden = shown > 0;
+  }
+  if (tabs.length) {
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        var key = t.getAttribute('data-filter');
+        applyFilter(key);
+        try { history.replaceState(null, '', key === 'all' ? location.pathname : '?cat=' + key); } catch (e) {}
+      });
+    });
+    var start = params.get('cat');
+    if (start) applyFilter(start);
+  }
+
   // Ссылки «Запросить» в карточках: подставляем тему в форму на этой же странице
   document.querySelectorAll('[data-topic]').forEach(function (a) {
     a.addEventListener('click', function () {
