@@ -477,7 +477,7 @@ def sne_catalog():
          body, request_title="Подобрать систему накопления")
 
 
-def product_hero(crumbs, title, accent, lead, img, actions, extra="", tag="", mono=False):
+def product_hero(crumbs, title, accent, lead, img, actions, extra="", tag=""):
     """Тёмный главный экран страницы товара: текст слева, изделие справа."""
     cr = '<li><a href="index.html">Главная</a></li>' + "".join(
         f'<li><a href="{h}">{e(n)}</a></li>' if h else f'<li aria-current="page">{e(n)}</li>' for h, n in crumbs)
@@ -491,7 +491,7 @@ def product_hero(crumbs, title, accent, lead, img, actions, extra="", tag="", mo
     {extra}
     <div class="actions">{actions}</div>
   </div>
-  <div class="p-visual{" mono" if mono else ""}"><img src="img/{e(img)}" alt="{e(title)}">{tag_html}</div>
+  <div class="p-visual"><img src="img/{e(img)}" alt="{e(title)}">{tag_html}</div>
 </div></section>
 """
 
@@ -595,7 +595,7 @@ def sne_series(s):
 
 
 def motors():
-    cards = "".join(f'<li><a class="m-card" href="dvigatel-{slug}.html">{ph(img, name, "mono")}<h3>{e(name)}</h3>'
+    cards = "".join(f'<li><a class="m-card" href="dvigatel-{slug}.html">{ph(img, name)}<h3>{e(name)}</h3>'
                     f'<span class="round">{icon("arrow")}</span></a></li>' for slug, name, img, _, _ in C.MOTORS)
     sol = [("Подбор аналогов", "Найдём замену снятому с производства или импортному двигателю с теми же присоединительными размерами."),
            ("Индивидуальные решения", "Подберём исполнение под ваш режим работы, среду и способ монтажа."),
@@ -631,7 +631,7 @@ def motor_page(slug, name, img, text, specs):
     rows = "".join(f'<tr><th scope="row">{e(k)}</th><td>{e(v)}</td></tr>' for k, v in specs)
     others = "".join(f'<li><a href="dvigatel-{s}.html">{e(n)}</a></li>' for s, n, _, _, _ in C.MOTORS if s != slug)
     body = product_hero([("catalog.html", "Каталог"), ("elektrodvigateli.html", "Электродвигатели"), (None, name)],
-                        name, f"Мощность {power}" if power else "", text, img, actions, mono=True) + f"""
+                        name, f"Мощность {power}" if power else "", text, img, actions) + f"""
 <section class="section spec-section"><div class="wrap">
   <div class="spec-grid">
     <div class="spec-main">
