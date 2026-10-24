@@ -10,13 +10,19 @@
 Картинки и постеры двигателя лежат в static/ и копируются в dist/ как есть.
 Ссылки между страницами относительные (catalog.html), поэтому сайт открывается и с сервера, и с диска.
 """
-import html, pathlib, shutil, subprocess, urllib.parse
+import hashlib, html, pathlib, shutil, subprocess, urllib.parse
 import content as C
 
 ROOT = pathlib.Path(__file__).parent
 DIST = ROOT / "dist"
 NM = ROOT / "node_modules"
 e = html.escape
+
+
+def version(rel):
+    """Метка версии по содержимому файла: site.css?v=… меняется при каждой правке,
+    и браузер не может подсунуть старый файл из кэша."""
+    return hashlib.sha1((ROOT / rel).read_bytes()).hexdigest()[:8]
 
 
 # ------------------------------------------------------------------ ресурсы
@@ -139,7 +145,7 @@ def head(title, desc, redirect=False):
 <link rel="icon" href="img/favicon.png">
 <script>(function(){{try{{if(localStorage.getItem('te-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})();</script>
 {redir}<link rel="stylesheet" href="assets/fonts/fonts.css">
-<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/site.css?v={version("src/css/site.css")}">
 </head>
 <body>
 """
@@ -212,7 +218,7 @@ def footer(scripts=""):
   </div>
   <div class="footer-bottom"><span>© 2026 ООО «Терра-Электро»</span><span>Пн–Чт 9:00–17:00, Пт 9:00–16:00</span></div>
 </div></footer>
-<script src="assets/js/site.js"></script>
+<script src="assets/js/site.js?v={version("src/js/site.js")}"></script>
 {scripts}</body>
 </html>
 """
