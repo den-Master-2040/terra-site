@@ -643,7 +643,7 @@ def sne_series(s):
     num, cap = s["stat"]
     extra = f'<div class="p-stats">{bavr_wave() if s["cat"] == "bavr" else ""}<div class="stat"><b>{e(num)}</b><span>{e(cap)}</span></div></div>'
     actions = (f'<a class="btn btn-primary" href="#request" data-topic="{e(s["title"])}">Получить ТКП</a>'
-               + view3d_button(s["models"][0]["name"], "btn btn-ghost-light", "Смотреть в 3D") +
+               +
                f'<a class="btn btn-ghost-light" href="docs/katalog-sne.pdf" download>{icon("doc")}Скачать каталог</a>')
     adv = ""
     if s["adv"]:
@@ -702,7 +702,7 @@ def motors():
 def motor_page(slug, name, img, text, specs):
     power = dict(specs).get("Мощность", "")
     actions = (f'<a class="btn btn-primary" href="#request" data-topic="{e(name)}">Запросить цену</a>'
-               + view3d_button(name, "btn btn-ghost-light", "Смотреть в 3D") +
+               +
                f'<a class="btn btn-ghost-light" href="elektrodvigateli.html">Все электродвигатели</a>')
     rows = "".join(f'<tr><th scope="row">{e(k)}</th><td>{e(v)}</td></tr>' for k, v in specs)
     others = "".join(f'<li><a href="dvigatel-{s}.html">{e(n)}</a></li>' for s, n, _, _, _ in C.MOTORS if s != slug)
@@ -720,8 +720,7 @@ def motor_page(slug, name, img, text, specs):
       <ul class="others">{others}</ul>
     </aside>
   </div>
-</div></section>
-{motor_3d_dialog()}"""
+</div></section>"""
     page(f"dvigatel-{slug}.html", f"{name} — Терра Электро", text, body, current="elektrodvigateli.html",
          request_title="Запросить подбор и цену")
 
