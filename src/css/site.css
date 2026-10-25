@@ -681,3 +681,5 @@ a.logo-card:hover { border-color: var(--ink); }
   .v3d-dims { margin-left: 0; flex-basis: 100%; }
   .v3d-hint { display: none; }
 }
+.m-grid > li { position: relative; }
+.m-3d { position: absolute; top: 12px; right: 12px; background: var(--bg); }

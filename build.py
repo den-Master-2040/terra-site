@@ -3,7 +3,7 @@
     python3 build.py
 
 Что делает:
-  * собирает 3D-двигатель (src/js/motor.js) и 3D-модели СНЭ (src/js/sne3d.js) вместе с three.js
+  * собирает 3D-двигатель лендинга (src/js/motor.js) и 3D-просмотр СНЭ и двигателей (src/js/model3d.js) с three.js
     в обычные скрипты через esbuild;
   * копирует шрифты, стили, общий скрипт;
   * генерирует HTML-страницы из шаблонов ниже и текстов в content.py;
@@ -20,10 +20,13 @@ NM = ROOT / "node_modules"
 e = html.escape
 
 
-def version(rel):
-    """Метка версии по содержимому файла: site.css?v=… меняется при каждой правке,
-    и браузер не может подсунуть старый файл из кэша."""
-    return hashlib.sha1((ROOT / rel).read_bytes()).hexdigest()[:8]
+def version(*rels):
+    """Метка версии по содержимому файлов: site.css?v=… меняется при каждой правке,
+    и браузер не может подсунуть старый файл из кэша. Для собранного скрипта передаются все его исходники."""
+    h = hashlib.sha1()
+    for rel in rels:
+        h.update((ROOT / rel).read_bytes())
+    return h.hexdigest()[:8]
 
 
 # ------------------------------------------------------------------ ресурсы
@@ -32,7 +35,7 @@ def build_assets():
     (DIST / "assets/css").mkdir(parents=True, exist_ok=True)
     (DIST / "assets/fonts").mkdir(parents=True, exist_ok=True)
     (DIST / "img").mkdir(exist_ok=True)
-    for js in ("motor", "sne3d"):
+    for js in ("motor", "model3d"):
         subprocess.run([str(NM / ".bin/esbuild"), f"src/js/{js}.js", "--bundle", "--minify", "--format=iife",
                         "--target=es2018", f"--outfile=dist/assets/js/{js}.js", "--log-level=warning"], cwd=ROOT, check=True)
     shutil.copy(ROOT / "src/js/site.js", DIST / "assets/js/site.js")
@@ -432,7 +435,7 @@ def sne_catalog():
             cards.append(f'<li data-cat="{sne_cat_tokens(s["cat"])}"><article class="p-card">{ph(m["img"], m["name"])}'
                          f'<h3>{e(m["name"])}</h3><p class="p-type">{e(s["short"])}</p><ul class="p-points">{bullets}</ul>'
                          f'<div class="p-foot"><span class="price">Цена по запросу</span><span class="p-acts">'
-                         f'{sne_3d_button(m["name"], "btn btn-ghost btn-small btn-3d", "3D")}'
+                         f'{view3d_button(m["name"], "btn btn-ghost btn-small btn-3d", "3D")}'
                          f'<a class="btn btn-dark btn-small stretched" href="{s["page"]}#m{n}">Подробнее</a></span></div></article></li>')
     parts = "".join(f"<li><b>{e(t)}</b><span>{e(d)}</span></li>" for t, d in C.SNE_PARTS)
     about = "".join(f"<p>{e(x)}</p>" for x in C.SNE_ABOUT)
@@ -475,8 +478,8 @@ def sne_catalog():
          body, request_title="Подобрать систему накопления")
 
 
-# ------------------------------------------------------------------ СНЭ: 3D-просмотр
-# Какая модель строится по картинке изделия (виды описаны в src/js/sne3d.js)
+# ------------------------------------------------------------------ 3D-просмотр СНЭ и двигателей
+# Какая модель строится по картинке изделия (виды описаны в src/js/3d/sne.js)
 SNE_3D_KIND = {"sne-cab-air.png": "cab-air", "sne-cab-liquid.png": "cab-liquid", "sne-container.png": "container",
                "bavr.png": "bavr", "nte-air.png": "nte-air", "nte-liquid.png": "nte-liquid"}
 
@@ -492,23 +495,42 @@ def sne_units(m):
     return units
 
 
-def sne_3d_button(name, cls="mt-3d", text="3D"):
+def view3d_button(name, cls="mt-3d", text="3D"):
     """Кнопка, открывающая окно с 3D-моделью; у больших кнопок (btn) есть иконка куба."""
     ic = icon("cube") if cls.startswith("btn") else ""
     return (f'<button type="button" class="{cls}" data-3d="{e(name)}" aria-label="3D-модель {e(name)}" title="Посмотреть в 3D">'
             f'{ic}{e(text)}</button>')
 
 
+# Какая модель строится для типа двигателя (виды описаны в src/js/3d/motors.js)
+MOTOR_3D_KIND = {"obshchepromyshlennye": "motor-general", "dlya-pch": "motor-pch", "sinhronnye-vysokovoltnye": "motor-sync",
+                 "vzryvozashchishchennye": "motor-ex", "asinhronnye-vysokovoltnye": "motor-hv", "s-tormozom": "motor-brake",
+                 "postoyannogo-toka": "motor-dc"}
+
+
 def sne_3d_dialog():
-    """Окно с 3D-моделью. three.js (assets/js/sne3d.js) скачивается при первом открытии."""
-    data = [{"title": s["title"], "models": [{"name": m["name"], "dims": m["dims"], "units": sne_units(m)} for m in s["models"]]}
-            for s in C.SNE_SERIES]
-    opts = "".join(f'<optgroup label="{e(s["title"])}">' + "".join(f'<option>{e(m["name"])}</option>' for m in s["models"]) + "</optgroup>"
-                   for s in C.SNE_SERIES)
+    groups = [(s["title"], [{"name": m["name"], "info": f'Габариты, мм: {m["dims"]}', "units": sne_units(m),
+                             "act": ["Открыть двери", "Закрыть двери"]} for m in s["models"]]) for s in C.SNE_SERIES]
+    return view3d_dialog(groups, "Система накопления энергии")
+
+
+def motor_3d_dialog():
+    items = [{"name": name, "info": f'Мощность {dict(specs).get("Мощность", "")}', "units": [{"k": MOTOR_3D_KIND[slug]}],
+              "act": ["Разобрать", "Собрать"]} for slug, name, _, _, specs in C.MOTORS]
+    return view3d_dialog([("Электродвигатели", items)], "Электродвигатель")
+
+
+def view3d_dialog(groups, title):
+    """Окно с 3D-моделью. three.js (assets/js/model3d.js) скачивается при первом открытии.
+    groups — [(название группы, [{name, info, units, act: [подпись «открыть», подпись «закрыть»]}])]."""
+    data = [m for _, items in groups for m in items]
+    opts = "".join(f'<optgroup label="{e(g)}">' + "".join(f'<option>{e(m["name"])}</option>' for m in items) + "</optgroup>"
+                   for g, items in groups)
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
-    return f"""<dialog class="v3d" id="v3d" aria-labelledby="v3d-title" data-src="assets/js/sne3d.js?v={version("src/js/sne3d.js")}">
+    src = ["src/js/model3d.js"] + sorted(str(p.relative_to(ROOT)) for p in (ROOT / "src/js/3d").glob("*.js"))
+    return f"""<dialog class="v3d" id="v3d" aria-labelledby="v3d-title" data-src="assets/js/model3d.js?v={version(*src)}">
   <div class="v3d-head">
-    <div><p class="v3d-kicker">3D-модель</p><h2 id="v3d-title">Система накопления энергии</h2></div>
+    <div><p class="v3d-kicker">3D-модель</p><h2 id="v3d-title">{e(title)}</h2></div>
     <button type="button" class="v3d-close" data-v3d="close" aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="v3d-stage">
@@ -518,11 +540,11 @@ def sne_3d_dialog():
   </div>
   <div class="v3d-bar">
     <select class="v3d-pick" data-v3d="model" aria-label="Модель">{opts}</select>
-    <button type="button" class="btn btn-ghost btn-small" data-v3d="doors" aria-pressed="false">Открыть двери</button>
+    <button type="button" class="btn btn-ghost btn-small" data-v3d="open" aria-pressed="false"></button>
     <button type="button" class="btn btn-ghost btn-small" data-v3d="reset">Исходный вид</button>
-    <span class="v3d-dims" data-v3d="dims"></span>
+    <span class="v3d-dims" data-v3d="info"></span>
   </div>
-  <p class="v3d-note">Упрощённая модель: показывает внешний вид и компоновку. Точное исполнение — в технико-коммерческом предложении.</p>
+  <p class="v3d-note">Упрощённая модель: показывает внешний вид и устройство. Точное исполнение — в технико-коммерческом предложении.</p>
 </dialog>
 <script type="application/json" id="v3d-data">{payload}</script>
 """
@@ -575,7 +597,7 @@ def sne_table(cols, models):
     rows, wrap_attr = [], ' class="wrap"'  # длинным значениям разрешаем перенос
     for n, m in enumerate(models, 1):
         tds = "".join(f'<td{wrap_attr if len(m[k]) > 16 else ""}>{e(m[k]).replace(" + ", "<br>+ ")}</td>' for _, k, _ in cols)
-        rows.append(f'<tr id="m{n}"><th scope="row" class="sticky"><span class="mt-name">{e(m["name"])}{sne_3d_button(m["name"])}</span></th>{tds}</tr>')
+        rows.append(f'<tr id="m{n}"><th scope="row" class="sticky"><span class="mt-name">{e(m["name"])}{view3d_button(m["name"])}</span></th>{tds}</tr>')
     return f'<div class="mt-wrap" tabindex="0" role="region" aria-label="Таблица моделей"><table class="mt"><thead>{thead}</thead><tbody>{"".join(rows)}</tbody></table></div>'
 
 
@@ -621,7 +643,7 @@ def sne_series(s):
     num, cap = s["stat"]
     extra = f'<div class="p-stats">{bavr_wave() if s["cat"] == "bavr" else ""}<div class="stat"><b>{e(num)}</b><span>{e(cap)}</span></div></div>'
     actions = (f'<a class="btn btn-primary" href="#request" data-topic="{e(s["title"])}">Получить ТКП</a>'
-               + sne_3d_button(s["models"][0]["name"], "btn btn-ghost-light", "Смотреть в 3D") +
+               + view3d_button(s["models"][0]["name"], "btn btn-ghost-light", "Смотреть в 3D") +
                f'<a class="btn btn-ghost-light" href="docs/katalog-sne.pdf" download>{icon("doc")}Скачать каталог</a>')
     adv = ""
     if s["adv"]:
@@ -648,7 +670,8 @@ def sne_series(s):
 
 def motors():
     cards = "".join(f'<li><a class="m-card" href="dvigatel-{slug}.html">{ph(img, name)}<h3>{e(name)}</h3>'
-                    f'<span class="round">{icon("arrow")}</span></a></li>' for slug, name, img, _, _ in C.MOTORS)
+                    f'<span class="round">{icon("arrow")}</span></a>{view3d_button(name, "btn btn-ghost btn-small btn-3d m-3d", "3D")}</li>'
+                    for slug, name, img, _, _ in C.MOTORS)
     sol = [("Подбор аналогов", "Найдём замену снятому с производства или импортному двигателю с теми же присоединительными размерами."),
            ("Индивидуальные решения", "Подберём исполнение под ваш режим работы, среду и способ монтажа."),
            ("Техническое сопровождение", "Консультируем при подборе, монтаже и пусконаладке.")]
@@ -668,7 +691,7 @@ def motors():
   <div class="section-head"><h2>Наши решения — ваш результат</h2></div>
   <ul class="adv text">{sol_html}</ul>
 </div></section>
-"""
+{motor_3d_dialog()}"""
     page("elektrodvigateli.html", "Электродвигатели — Терра Электро",
          "Асинхронные, синхронные, взрывозащищённые, высоковольтные и двигатели постоянного тока.",
          body, request_title="Нужен подбор электродвигателя?")
@@ -679,6 +702,7 @@ def motors():
 def motor_page(slug, name, img, text, specs):
     power = dict(specs).get("Мощность", "")
     actions = (f'<a class="btn btn-primary" href="#request" data-topic="{e(name)}">Запросить цену</a>'
+               + view3d_button(name, "btn btn-ghost-light", "Смотреть в 3D") +
                f'<a class="btn btn-ghost-light" href="elektrodvigateli.html">Все электродвигатели</a>')
     rows = "".join(f'<tr><th scope="row">{e(k)}</th><td>{e(v)}</td></tr>' for k, v in specs)
     others = "".join(f'<li><a href="dvigatel-{s}.html">{e(n)}</a></li>' for s, n, _, _, _ in C.MOTORS if s != slug)
@@ -697,7 +721,7 @@ def motor_page(slug, name, img, text, specs):
     </aside>
   </div>
 </div></section>
-"""
+{motor_3d_dialog()}"""
     page(f"dvigatel-{slug}.html", f"{name} — Терра Электро", text, body, current="elektrodvigateli.html",
          request_title="Запросить подбор и цену")
 

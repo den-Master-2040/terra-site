@@ -104,18 +104,17 @@
     if (start) applyFilter(start);
   }
 
-  /* ---- 3D-модели СНЭ: окно с просмотрщиком, three.js скачивается при первом открытии ---- */
+  /* ---- 3D-модели СНЭ и двигателей: окно с просмотрщиком, three.js скачивается при первом открытии ---- */
   var v3d = document.getElementById('v3d');
   if (v3d) {
     var byName = {};
-    JSON.parse(document.getElementById('v3d-data').textContent).forEach(function (s) {
-      s.models.forEach(function (m) { byName[m.name] = m; });
-    });
+    JSON.parse(document.getElementById('v3d-data').textContent).forEach(function (m) { byName[m.name] = m; });
     var part = function (k) { return v3d.querySelector('[data-v3d="' + k + '"]'); };
     var stage = v3d.querySelector('.v3d-stage'), loadMsg = v3d.querySelector('.v3d-load');
-    var pick = part('model'), doorsBtn = part('doors'), waiting = null;
+    var pick = part('model'), openBtn = part('open'), current = null, waiting = null;
+    var viewer = function () { return window.Model3D; };
     var loadViewer = function (cb) {
-      if (window.SNE3D) return cb();
+      if (viewer()) return cb();
       if (waiting) return waiting.push(cb);
       waiting = [cb];
       var s = document.createElement('script');
@@ -124,20 +123,22 @@
       s.onerror = function () { loadMsg.textContent = 'Не удалось загрузить модель. Проверьте подключение и попробуйте ещё раз.'; waiting = null; };
       document.head.appendChild(s);
     };
-    var setDoors = function (open) {
-      doorsBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
-      doorsBtn.textContent = open ? 'Закрыть двери' : 'Открыть двери';
-      if (window.SNE3D) window.SNE3D.doors(open);
+    // «Открыть двери» у СНЭ, «Разобрать» у двигателей
+    var setOpen = function (on) {
+      openBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      openBtn.textContent = current.act[on ? 1 : 0];
+      if (viewer()) viewer().open(on);
     };
     var show = function (name) {
       var m = byName[name];
       if (!m) return;
+      current = m;
       document.getElementById('v3d-title').textContent = name;
       pick.value = name;
-      part('dims').textContent = 'Габариты, мм: ' + m.dims;
-      setDoors(false);
+      part('info').textContent = m.info;
+      setOpen(false);
       loadViewer(function () {
-        if (!window.SNE3D.show(stage, m)) loadMsg.textContent = 'Браузер не поддерживает 3D-графику (WebGL). Фото и характеристики есть на странице.';
+        if (!viewer().show(stage, m)) loadMsg.textContent = 'Браузер не поддерживает 3D-графику (WebGL). Фото и характеристики есть на странице.';
       });
     };
     document.addEventListener('click', function (e) {
@@ -147,17 +148,17 @@
       if (typeof v3d.showModal === 'function') v3d.showModal(); else v3d.setAttribute('open', '');
       document.body.style.overflow = 'hidden';
       show(b.getAttribute('data-3d'));
-      if (window.SNE3D) window.SNE3D.start();
+      if (viewer()) viewer().start();
     });
     pick.addEventListener('change', function () { show(pick.value); });
-    doorsBtn.addEventListener('click', function () { setDoors(doorsBtn.getAttribute('aria-pressed') !== 'true'); });
-    part('reset').addEventListener('click', function () { if (window.SNE3D) window.SNE3D.reset(); });
+    openBtn.addEventListener('click', function () { setOpen(openBtn.getAttribute('aria-pressed') !== 'true'); });
+    part('reset').addEventListener('click', function () { if (viewer()) viewer().reset(); });
     part('close').addEventListener('click', function () { if (v3d.close) v3d.close(); else v3d.removeAttribute('open'); });
     // клик по затемнению вокруг окна закрывает его
     v3d.addEventListener('click', function (e) { if (e.target === v3d && v3d.close) v3d.close(); });
     v3d.addEventListener('close', function () {
       document.body.style.overflow = '';
-      if (window.SNE3D) window.SNE3D.stop();
+      if (viewer()) viewer().stop();
     });
   }
 
