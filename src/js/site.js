@@ -104,6 +104,63 @@
     if (start) applyFilter(start);
   }
 
+  /* ---- 3D-модели СНЭ: окно с просмотрщиком, three.js скачивается при первом открытии ---- */
+  var v3d = document.getElementById('v3d');
+  if (v3d) {
+    var byName = {};
+    JSON.parse(document.getElementById('v3d-data').textContent).forEach(function (s) {
+      s.models.forEach(function (m) { byName[m.name] = m; });
+    });
+    var part = function (k) { return v3d.querySelector('[data-v3d="' + k + '"]'); };
+    var stage = v3d.querySelector('.v3d-stage'), loadMsg = v3d.querySelector('.v3d-load');
+    var pick = part('model'), doorsBtn = part('doors'), waiting = null;
+    var loadViewer = function (cb) {
+      if (window.SNE3D) return cb();
+      if (waiting) return waiting.push(cb);
+      waiting = [cb];
+      var s = document.createElement('script');
+      s.src = v3d.getAttribute('data-src');
+      s.onload = function () { waiting.forEach(function (f) { f(); }); };
+      s.onerror = function () { loadMsg.textContent = 'Не удалось загрузить модель. Проверьте подключение и попробуйте ещё раз.'; waiting = null; };
+      document.head.appendChild(s);
+    };
+    var setDoors = function (open) {
+      doorsBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
+      doorsBtn.textContent = open ? 'Закрыть двери' : 'Открыть двери';
+      if (window.SNE3D) window.SNE3D.doors(open);
+    };
+    var show = function (name) {
+      var m = byName[name];
+      if (!m) return;
+      document.getElementById('v3d-title').textContent = name;
+      pick.value = name;
+      part('dims').textContent = 'Габариты, мм: ' + m.dims;
+      setDoors(false);
+      loadViewer(function () {
+        if (!window.SNE3D.show(stage, m)) loadMsg.textContent = 'Браузер не поддерживает 3D-графику (WebGL). Фото и характеристики есть на странице.';
+      });
+    };
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-3d]');
+      if (!b) return;
+      e.preventDefault();
+      if (typeof v3d.showModal === 'function') v3d.showModal(); else v3d.setAttribute('open', '');
+      document.body.style.overflow = 'hidden';
+      show(b.getAttribute('data-3d'));
+      if (window.SNE3D) window.SNE3D.start();
+    });
+    pick.addEventListener('change', function () { show(pick.value); });
+    doorsBtn.addEventListener('click', function () { setDoors(doorsBtn.getAttribute('aria-pressed') !== 'true'); });
+    part('reset').addEventListener('click', function () { if (window.SNE3D) window.SNE3D.reset(); });
+    part('close').addEventListener('click', function () { if (v3d.close) v3d.close(); else v3d.removeAttribute('open'); });
+    // клик по затемнению вокруг окна закрывает его
+    v3d.addEventListener('click', function (e) { if (e.target === v3d && v3d.close) v3d.close(); });
+    v3d.addEventListener('close', function () {
+      document.body.style.overflow = '';
+      if (window.SNE3D) window.SNE3D.stop();
+    });
+  }
+
   // Ссылки «Запросить» в карточках: подставляем тему в форму на этой же странице
   document.querySelectorAll('[data-topic]').forEach(function (a) {
     a.addEventListener('click', function () {
