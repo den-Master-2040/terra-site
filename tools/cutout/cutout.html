@@ -1,0 +1,49 @@
+<!doctype html><meta charset="utf-8">
+<!-- Снимает белый фон с фото (JPEG без прозрачности). Открыть через локальный сервер:
+     cutout.html?src=фото.jpg&fmt=image/webp  — результат (data URL) в <pre id="out">.
+     Так сделан static/img/hero-bess.webp; там же растворён левый край мостовой. --><pre id="out"></pre><script>
+// Убирает белый фон: заливка от краёв по почти белым пикселям, мягкий край, снятие белой каймы.
+const q = new URLSearchParams(location.search);
+const T = +q.get('t') || 236;          // порог «белого»
+const im = new Image(); im.onload = () => {
+  const W = im.width, H = im.height;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, W, H), p = d.data;
+  const white = i => { const r = p[i*4], gg = p[i*4+1], b = p[i*4+2]; return Math.min(r, gg, b) >= T && Math.max(r, gg, b) - Math.min(r, gg, b) < 18; };
+  const bg = new Uint8Array(W * H), st = [];
+  const push = i => { if (!bg[i] && white(i)) { bg[i] = 1; st.push(i); } };
+  for (let x = 0; x < W; x++) push(x);                 // верхний край
+  for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }  // боковые края
+  while (st.length) {
+    const i = st.pop(), x = i % W, y = (i / W) | 0;
+    if (x > 0) push(i - 1); if (x < W - 1) push(i + 1); if (y > 0) push(i - W); if (y < H - 1) push(i + W);
+  }
+  // мягкий край: доля «не фона» в окрестности 5×5
+  const R = 2, a = new Float32Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let s = 0, n = 0;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+      const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      n++; if (!bg[yy * W + xx]) s++;
+    }
+    a[y * W + x] = bg[y * W + x] ? Math.max(0, (s / n - 0.5) * 2) : Math.min(1, 0.5 + s / n / 2);
+  }
+  for (let i = 0; i < W * H; i++) {
+    const al = a[i]; p[i*4+3] = Math.round(al * 255);
+    if (al > 0 && al < 1) for (let k = 0; k < 3; k++) {     // убрать примесь белого фона
+      const v = (p[i*4+k] - 255 * (1 - al)) / al; p[i*4+k] = Math.max(0, Math.min(255, v));
+    }
+  }
+  // левый край мостовой (ниже низа контейнеров) плавно растворяется, чтобы не было вертикального среза
+  const yGround = Math.round(H * 0.795), fw = W * 0.17;
+  for (let y = 0; y < H; y++) for (let x = 0; x < fw; x++) {
+    const k = Math.min(1, Math.max(0, (y - yGround) / (H * 0.04)));   // только мостовая
+    const t = x / fw, f = t * t * (3 - 2 * t);
+    const i = (y * W + x) * 4 + 3; p[i] = Math.round(p[i] * (1 - k + k * f));
+  }
+  g.putImageData(d, 0, 0);
+  document.getElementById('out').textContent = c.toDataURL(q.get('fmt') || 'image/webp', 0.9);
+  document.title = 'done';
+}; im.src = q.get('src') || 'photo.jpg';
+</script>
