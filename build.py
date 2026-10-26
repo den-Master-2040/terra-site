@@ -205,7 +205,8 @@ def request_block(title="Отправить запрос", text=None):
 
 
 def footer(scripts=""):
-    links = "".join(f'<li><a href="{h}">{e(n)}</a></li>' for h, n, _ in C.MENU if h != "index.html")
+    # «Системы накопления» в шапке спрятаны в «Каталог», а в подвале остаются отдельным пунктом
+    links = "".join(f'<li><a href="{h}">{e(n)}</a></li>' for h, n in [("sne.html", "Системы накопления")] + [m[:2] for m in C.MENU])
     return f"""<footer class="site-footer"><div class="wrap">
   <div class="footer-grid">
     <div><a class="brand" href="index.html?site"><img src="img/logo.png" alt="Терра Электро" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="brand-text" hidden>Терра Электро</span></a>
