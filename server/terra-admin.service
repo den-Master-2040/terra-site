@@ -1,0 +1,17 @@
+[Unit]
+Description=Админка новостей сайта Терра Электро
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/lib/terra-admin/terra_admin.py
+EnvironmentFile=/etc/terra-admin.env
+DynamicUser=yes
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

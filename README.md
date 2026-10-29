@@ -16,7 +16,8 @@ main  ──push──▶  GitHub Actions: npm ci + python3 build.py  ──▶ 
 | Папка / файл | Что там |
 |---|---|
 | `content.py` | Все тексты, меню, карточки, список картинок. Правьте здесь. |
-| `content_news.py` | Новости: краткие описания для `news.html` и полные тексты для страниц `news-*.html`. Картинки — в `static/img/news`. |
+| `data/news.json` | Новости: краткие описания для `news.html` и полные тексты для страниц `news-*.html`. Картинки — в `static/img/news`. Правится руками или через админку. |
+| `src/js/admin.js`, `server/admin/` | Редактор новостей (страница `/login`) и его серверная часть. |
 | `build.py` | Шаблоны страниц и сборка в `dist/`. |
 | `src/css/site.css` | Стили (светлая тема + тёмная по кнопке). |
 | `src/js/site.js` | Тема, мобильное меню, формы. |
@@ -50,6 +51,26 @@ python build.py
 3. Через минуту после каждого пуша в `main` сайт на `https://dev.terra-electro.ru` обновится сам.
 
 Проверка: `journalctl -u terra-update -f` (обновления), `journalctl -u caddy -f` (веб-сервер).
+
+## Админка новостей
+
+Адрес — `/login` (ссылок на него нет). После входа на `news.html` и страницах новостей появляется панель редактора:
+добавить, изменить, удалить новость, фото, ссылки, ролик YouTube. Сохранение — коммит в `main` от имени токена
+(`data/news.json` + фото), дальше обычная сборка: на сайте через 1–2 минуты. **Перед своей правкой новостей делайте `git pull`.**
+
+Поставить на сервер (один раз):
+```bash
+sudo install -D -m 644 server/admin/terra_admin.py /usr/local/lib/terra-admin/terra_admin.py
+sudo install -m 600 server/terra-admin.env.example /etc/terra-admin.env   # заполнить: пароль, секрет, токен GitHub
+sudo cp server/terra-admin.service /etc/systemd/system/ && sudo systemctl enable --now terra-admin
+sudo cp server/nginx-terra.conf /etc/nginx/sites-available/terra && sudo nginx -t && sudo systemctl reload nginx
+```
+Проверка: `journalctl -u terra-admin -f`. После правок `terra_admin.py` повторить первую команду и `sudo systemctl restart terra-admin`.
+
+Проверить у себя без GitHub (пишет прямо в `data/news.json` и `static/img/news`):
+```bash
+TERRA_REPO_DIR=. ADMIN_PASSWORD_HASH=$(python3 server/admin/terra_admin.py hash-password test) python3 server/admin/terra_admin.py
+```
 
 ## Что ещё не подключено
 

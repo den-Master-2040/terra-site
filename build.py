@@ -39,6 +39,7 @@ def build_assets():
         subprocess.run([str(NM / ".bin/esbuild"), f"src/js/{js}.js", "--bundle", "--minify", "--format=iife",
                         "--target=es2018", f"--outfile=dist/assets/js/{js}.js", "--log-level=warning"], cwd=ROOT, check=True)
     shutil.copy(ROOT / "src/js/site.js", DIST / "assets/js/site.js")
+    shutil.copy(ROOT / "src/js/admin.js", DIST / "assets/js/admin.js")
     shutil.copy(ROOT / "src/css/site.css", DIST / "assets/css/site.css")
     # Шрифт как на terra-electro.ru — Libre Franklin с Google Fonts (в этой версии есть кириллица).
     # Файлы лежат в static/assets/fonts и уже скопированы в dist вместе со static/.
@@ -130,8 +131,9 @@ def topic_link(name, page="catalog.html"):
     return f'{page}?topic={urllib.parse.quote(name)}#request'
 
 
-def head(title, desc, redirect=False):
+def head(title, desc, redirect=False, noindex=False):
     redir = ""
+    robots = '<meta name="robots" content="noindex, nofollow">\n' if noindex else ""
     if redirect:
         # Первый заход в сессии на главную → лендинг. Внутри сайта не срабатывает (site.js ставит отметку).
         redir = ("<script>(function(){try{if(location.search.indexOf('site')<0&&!sessionStorage.getItem('te-visited')){"
@@ -143,7 +145,7 @@ def head(title, desc, redirect=False):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{e(title)}</title>
 <meta name="description" content="{e(desc)}">
-<link rel="icon" href="img/favicon.png">
+{robots}<link rel="icon" href="img/favicon.png">
 <script>(function(){{try{{if(localStorage.getItem('te-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})();</script>
 {redir}<link rel="stylesheet" href="assets/fonts/fonts.css?v={version("static/assets/fonts/libre-franklin-400.woff2")}">
 <link rel="stylesheet" href="assets/css/site.css?v={version("src/css/site.css")}">
@@ -165,6 +167,10 @@ def header(current, cta="#request"):
   <span class="tagline">{e(C.TAGLINE)}</span>
   <a class="phone-top" href="tel:{C.PHONE_TEL}">{C.PHONE}</a>
   <a class="email" href="mailto:{C.EMAIL}">{C.EMAIL}</a>
+  <form class="top-search" action="search.html" role="search">
+    <input type="search" name="s" placeholder="Поиск по сайту" aria-label="Поиск по сайту" autocomplete="off">
+    <button type="submit" aria-label="Найти"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </form>
   <button class="theme-toggle" type="button" aria-pressed="false">
     <svg class="ic-moon" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     <svg class="ic-sun" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></g></svg>
@@ -290,8 +296,8 @@ def write(name, html_text):
     (DIST / name).write_text(html_text, encoding="utf-8")
 
 
-def page(name, title, desc, body, current=None, request=True, request_title="Отправить запрос", scripts="", redirect=False):
-    write(name, head(title, desc, redirect) + header(current or name, "#request" if request else "contacts.html#request") + "<main>\n" + body +
+def page(name, title, desc, body, current=None, request=True, request_title="Отправить запрос", scripts="", redirect=False, noindex=False):
+    write(name, head(title, desc, redirect, noindex) + header(current or name, "#request" if request else "contacts.html#request") + "<main>\n" + body +
           (request_block(request_title) if request else "") + "</main>\n" + footer(scripts))
 
 
@@ -864,7 +870,7 @@ def inzhiniring():
 
 def news():
     body = page_head([(None, "Новости")], "Новости компании") + f"""
-<section class="section"><div class="wrap">{news_cards(C.NEWS)}</div></section>
+<section class="section" data-news-admin="list"><div class="wrap">{news_cards(C.NEWS)}</div></section>
 """
     page("news.html", "Новости — Терра Электро", "Новости и выполненные проекты компании Терра Электро.", body, request=False)
     for i, n in enumerate(C.NEWS):
@@ -895,7 +901,7 @@ def news_article(n, newer, older):
                 f'<small>{label}</small><span>{e(item["title"])}</span></a>')
 
     body = page_head([("news.html", "Новости"), (None, n["title"])], n["title"]) + f"""
-<section class="section tight"><div class="wrap article">
+<section class="section tight" data-news-admin="{e(n["slug"])}"><div class="wrap article">
   <time class="article-date" datetime="{n["iso"]}">{e(n["date"])}</time>
   <div class="ph cover article-cover"><img src="img/{e(n["img"])}" alt="{e(n["title"])}" decoding="async"></div>
   <div class="prose">{"".join(block(b) for b in n["body"])}</div>
@@ -1034,6 +1040,60 @@ def landing():
          scripts='<script src="assets/js/motor.js"></script>\n')
 
 
+# ------------------------------------------------------------------ поиск
+NO_SEARCH = {"landing.html", "search.html", "login.html"}
+
+
+def page_text(html_text):
+    """Видимый текст из <main> страницы: без скриптов, картинок-схем и формы заявки."""
+    m = re.search(r"<main>(.*)</main>", html_text, re.S)
+    t = m.group(1) if m else ""
+    t = re.sub(r'<section class="section band request".*?</section>', " ", t, flags=re.S)
+    t = re.sub(r"<(script|style|svg|form|dialog|template)\b.*?</\1>", " ", t, flags=re.S)
+    t = re.sub(r"<[^>]+>", " ", t)
+    return re.sub(r"\s+", " ", html.unescape(t)).strip()
+
+
+def search():
+    """Поиск как на старом сайте (WordPress ?s=): все слова запроса должны встретиться на странице,
+    фраза в кавычках ищется целиком. Индекс всех страниц встроен в search.html, поэтому работает и с диска."""
+    index = []
+    for f in sorted(DIST.glob("*.html")):
+        if f.name in NO_SEARCH:
+            continue
+        src = f.read_text(encoding="utf-8")
+        title = html.unescape(re.search(r"<title>(.*?)</title>", src).group(1)).replace(" — Терра Электро", "")
+        index.append({"u": f.name, "t": title, "x": page_text(src)})
+    data = json.dumps(index, ensure_ascii=False).replace("</", "<\\/")
+    body = page_head([(None, "Поиск")], "Поиск по сайту") + f"""
+<section class="section tight"><div class="wrap search-page">
+  <form class="search-form" action="search.html" role="search">
+    <input type="search" name="s" placeholder="Например: система накопления 100 кВт" aria-label="Что найти" autocomplete="off">
+    <button class="btn btn-primary" type="submit">Найти</button>
+  </form>
+  <p class="search-status" role="status"></p>
+  <ol class="search-results"></ol>
+</div></section>
+<script type="application/json" id="search-index">{data}</script>
+"""
+    page("search.html", "Поиск — Терра Электро", "Поиск по сайту Терра Электро.", body, request=False)
+
+
+def login():
+    """Вход в редактор новостей. Ссылок на страницу нет: открывается по адресу /login (nginx: try_files $uri.html)."""
+    body = page_head([(None, "Вход")], "Вход для редактора") + """
+<section class="section tight"><div class="wrap">
+  <form class="login-form" id="login-form" novalidate>
+    <label for="l-pass">Пароль</label>
+    <input id="l-pass" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary" type="submit">Войти</button>
+    <p class="form-status" role="status" hidden></p>
+  </form>
+</div></section>
+"""
+    page("login.html", "Вход — Терра Электро", "Вход для редактора сайта.", body, request=False, noindex=True)
+
+
 def main():
     # dist/ всегда собирается с нуля; всё, что не генерируется (картинки, постеры), лежит в static/
     if DIST.exists():
@@ -1041,10 +1101,11 @@ def main():
     shutil.copytree(ROOT / "static", DIST, ignore=shutil.ignore_patterns(".gitkeep"))
     build_assets()
     write_fetch_script()
-    for f in (home, sne_catalog, catalog, motors, brands, sgp, proizvodstvo, podstantsii, ktpp, nizkovoltnoye, inzhiniring, news, company, contacts, landing):
+    for f in (home, sne_catalog, catalog, motors, brands, sgp, proizvodstvo, podstantsii, ktpp, nizkovoltnoye, inzhiniring, news, company, contacts, landing, login):
         f()
     for series in C.SNE_SERIES:
         sne_series(series)
+    search()  # последним: индексирует уже собранные страницы
     print("ok:", ", ".join(sorted(p.name for p in DIST.glob("*.html"))))
 
 

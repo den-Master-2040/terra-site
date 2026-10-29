@@ -1,5 +1,7 @@
 """Контент сайта Терра Электро. Правьте тексты здесь, потом запускайте build.py."""
 
+import json, pathlib
+
 SITE = "https://terra-electro.ru/wp-content/uploads/"
 
 # Локальное имя → путь на старом сайте. fetch-images.sh скачает их в img/
@@ -155,7 +157,10 @@ BRANDS_MORE = ("Gefran, SECOM, CD Automation, SECO, Simtec, Precitool, GÜHRING,
                "ESE GmbH, GAPTEC, Vicor, Delta Electronics, Schroff, POLYRACK, Electronic-Aufbausysteme, FINELCOMP, "
                "Trafotek, Elettromeccanica Piossasco, TrasfEco, Lapp cable, TecniKabel, Moeller, Wago")
 
-from content_news import NEWS  # noqa: E402 — новости с полными текстами в отдельном файле
+# Новости с полными текстами — в data/news.json: его правит и админка (server/admin).
+# Блоки текста: ["p", абзац], ["ul", [пункты]], ["img", файл], ["gallery", [файлы]], ["video", id ролика на YouTube];
+# в абзаце и пункте списка ссылка пишется как [текст](https://…). Файлы картинок — относительно static/img.
+NEWS = json.loads((pathlib.Path(__file__).parent / "data/news.json").read_text(encoding="utf-8"))
 
 CLIENTS = [
     ("ООО «Карелия Палп»", "Россия", "client-karelia.png"),

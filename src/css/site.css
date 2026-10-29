@@ -86,7 +86,13 @@ img { max-width: 100%; }
 .theme-toggle .ic-sun { display: none; }
 :root[data-theme="dark"] .theme-toggle .ic-sun { display: inline; }
 :root[data-theme="dark"] .theme-toggle .ic-moon { display: none; }
+.top-search { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); }
+.top-search:focus-within { border-color: var(--ink); }
+.top-search input { width: 150px; border: 0; background: none; padding: 4px 0 4px 12px; color: var(--ink); font: 400 .8125rem/1.4 var(--font-body); outline: none; }
+.top-search button { display: grid; place-items: center; background: none; border: 0; padding: 4px 10px 4px 6px; color: var(--muted); cursor: pointer; }
+.top-search button:hover { color: var(--ink); }
 @media (max-width: 860px) { .topbar .tagline, .topbar .email { display: none; } }
+@media (max-width: 480px) { .top-search input { width: 110px; } }
 @media (max-width: 480px) { .topbar .phone-top { display: none; } .topbar .wrap { justify-content: space-between; } }
 
 /* ---------- Шапка ---------- */
@@ -228,6 +234,17 @@ a.news-card:hover h3 { text-decoration: underline; text-decoration-color: var(--
 .article-nav span { font-weight: 600; line-height: 1.35; }
 .article-nav-next { text-align: right; }
 @media (max-width: 560px) { .article-nav { grid-template-columns: 1fr; } }
+
+/* Поиск */
+.search-page { display: grid; gap: 20px; max-width: 840px; }
+.search-form { display: flex; gap: 10px; }
+.search-form input { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+.search-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.search-status { color: var(--muted); }
+.search-results { list-style: none; padding: 0; display: grid; gap: 22px; }
+.search-results a { font-weight: 600; font-size: 1.125rem; color: var(--ink); text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.search-results p { color: var(--muted); margin-top: 4px; }
+.search-results mark { background: var(--accent-soft); color: var(--ink); padding: 0 1px; border-radius: 2px; }
 
 /* ---------- Карточки товаров ---------- */
 .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; list-style: none; padding: 0; }
@@ -708,3 +725,47 @@ a.news-card:hover h3 { text-decoration: underline; text-decoration-color: var(--
 }
 .m-grid > li { position: relative; }
 .m-3d { position: absolute; top: 12px; right: 12px; background: var(--bg); }
+
+/* ---------- Вход и редактор новостей (admin.js) ---------- */
+.login-form { display: grid; gap: 10px; max-width: 360px; }
+.login-form input { padding: 12px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+.login-form .btn { justify-self: start; }
+.adm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px; margin-bottom: 24px; border: 2px dashed var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+.adm-msg { flex: 1; min-width: 12ch; color: var(--muted); font-size: .9375rem; }
+.adm-msg.bad, .adm-err { color: #c0392b; }
+.adm-link { background: none; border: 0; color: var(--ink); font: inherit; text-decoration: underline; cursor: pointer; }
+.news li { display: grid; grid-template-rows: 1fr auto; gap: 10px; }
+.adm-card-actions { display: flex; gap: 8px; }
+.adm-card-actions .btn, .adm-bar .btn { padding: 8px 14px; font-size: .875rem; }
+.adm-dlg { width: min(860px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 10px; background: var(--bg); color: var(--ink); box-shadow: 0 24px 64px rgba(0, 0, 0, .4); }
+.adm-dlg::backdrop { background: rgba(14, 14, 13, .7); }
+.adm-form { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; max-height: calc(100dvh - 24px); }
+.adm-dlg-head, .adm-dlg-foot { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.adm-dlg-foot { border-bottom: 0; border-top: 1px solid var(--line); justify-content: flex-end; }
+.adm-dlg-foot .adm-err { margin-right: auto; }
+.adm-dlg-head h2 { font: 600 1.25rem/1.3 var(--font-display); margin-right: auto; }
+.adm-x { background: none; border: 0; color: var(--ink); font-size: 1.25rem; cursor: pointer; }
+.adm-dlg-body { overflow: auto; padding: 20px; display: grid; gap: 18px; }
+.adm-field { display: grid; gap: 6px; }
+.adm-field > span { font-weight: 600; }
+.adm-field small { color: var(--muted); font-size: .8125rem; }
+.adm-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; }
+@media (max-width: 560px) { .adm-row { grid-template-columns: 1fr; } }
+.adm-dlg input, .adm-dlg textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+.adm-dlg input[readonly] { background: var(--surface); color: var(--muted); }
+.adm-dlg textarea { resize: vertical; line-height: 1.5; }
+.adm-cover { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.adm-cover img { width: 200px; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.adm-blocks { display: grid; gap: 12px; }
+.adm-block { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.adm-block-head { display: flex; align-items: center; gap: 6px; }
+.adm-block-head b { margin-right: auto; font-size: .875rem; }
+.adm-block-head button { min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); cursor: pointer; font: inherit; font-size: .8125rem; }
+.adm-block-head button:hover { border-color: var(--ink); }
+.adm-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.adm-photos figure { position: relative; margin: 0; }
+.adm-photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; display: block; }
+.adm-photos figure button { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .7); color: #fff; cursor: pointer; }
+.adm-add-photo { aspect-ratio: 4 / 3; border: 1px dashed var(--muted); border-radius: 4px; background: none; color: var(--ink); cursor: pointer; font: inherit; }
+.adm-add { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-add .btn { padding: 8px 14px; font-size: .875rem; }

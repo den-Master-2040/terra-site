@@ -170,4 +170,83 @@
       if (msg) msg.value = 'Запрос: ' + a.getAttribute('data-topic') + '\n';
     });
   });
+
+  /* ---- Поиск: как WordPress ?s= — все слова должны встретиться, "фраза в кавычках" — целиком ---- */
+  var sIndex = document.getElementById('search-index');
+  if (sIndex) {
+    var q = (params.get('s') || '').trim();
+    var sStatus = document.querySelector('.search-status'), sList = document.querySelector('.search-results');
+    document.querySelectorAll('input[name="s"]').forEach(function (i) { i.value = q; });
+    var fold = function (t) { return t.toLowerCase().replace(/ё/g, 'е'); };
+    var esc = function (t) { return t.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var terms = [];
+    q.replace(/"([^"]+)"|(\S+)/g, function (m, phrase, word) { terms.push(fold((phrase || word).trim())); });
+    terms = terms.filter(function (t) { return t.length > 0; });
+    if (!terms.length) {
+      sStatus.textContent = 'Введите слово или фразу.';
+    } else {
+      var hits = [];
+      JSON.parse(sIndex.textContent).forEach(function (p) {
+        var t = fold(p.t), x = fold(p.x), score = 0;
+        for (var i = 0; i < terms.length; i++) {
+          var inT = t.indexOf(terms[i]) >= 0, inX = x.indexOf(terms[i]) >= 0;
+          if (!inT && !inX) return;
+          score += inT ? 10 : 1;
+        }
+        if (t.indexOf(fold(q.replace(/"/g, ''))) >= 0) score += 20;
+        hits.push({ p: p, score: score, x: x });
+      });
+      hits.sort(function (a, b) { return b.score - a.score; });
+      sStatus.textContent = hits.length ? 'Найдено: ' + hits.length : 'По запросу «' + q + '» ничего не нашлось. Попробуйте другие слова.';
+      // фрагмент текста вокруг первого найденного слова, найденное подсвечено
+      var mark = function (text) {
+        var out = esc(text);
+        terms.forEach(function (t) {
+          var re = new RegExp('(' + esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/е/g, '[её]') + ')', 'gi');
+          out = out.replace(re, '<mark>$1</mark>');
+        });
+        return out;
+      };
+      sList.innerHTML = hits.map(function (h) {
+        var pos = -1;
+        terms.forEach(function (t) { var i = h.x.indexOf(t); if (i >= 0 && (pos < 0 || i < pos)) pos = i; });
+        var from = Math.max(0, pos - 80), snip = h.p.x.slice(from, from + 240);
+        return '<li><a href="' + esc(h.p.u) + '">' + mark(h.p.t) + '</a><p>' + (from > 0 ? '…' : '') + mark(snip) +
+          (from + 240 < h.p.x.length ? '…' : '') + '</p></li>';
+      }).join('');
+    }
+  }
+
+  /* ---- Вход в редактор (/login) ---- */
+  var loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    var lStatus = loginForm.querySelector('.form-status');
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      lStatus.hidden = false;
+      lStatus.textContent = 'Проверяем…';
+      fetch('/api/admin/login', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Terra-Admin': '1' },
+        body: JSON.stringify({ password: loginForm.elements.password.value })
+      }).then(function (r) {
+        return r.json().catch(function () { return { error: 'Админка не отвечает (' + r.status + ')' }; }).then(function (d) {
+          if (!r.ok) throw new Error(d.error || ('Ошибка ' + r.status));
+          try { localStorage.setItem('te-admin', '1'); } catch (err) {}
+          location.href = 'news.html';
+        });
+      }).catch(function (err) {
+        lStatus.textContent = err.message === 'Failed to fetch' ? 'Админка не отвечает.' : err.message;
+      });
+    });
+  }
+
+  /* ---- Редактор новостей: только после входа на /login, остальным посетителям ничего не грузится ---- */
+  var adminOn = false;
+  try { adminOn = localStorage.getItem('te-admin') === '1'; } catch (e) {}
+  if (adminOn && document.querySelector('[data-news-admin]')) {
+    var s = document.createElement('script');
+    s.src = 'assets/js/admin.js?v=' + Date.now();
+    document.body.appendChild(s);
+  }
 })();
