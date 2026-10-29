@@ -11,7 +11,7 @@
 Картинки и постеры двигателя лежат в static/ и копируются в dist/ как есть.
 Ссылки между страницами относительные (catalog.html), поэтому сайт открывается и с сервера, и с диска.
 """
-import hashlib, html, json, pathlib, shutil, subprocess, urllib.parse
+import hashlib, html, json, pathlib, re, shutil, subprocess, urllib.parse
 import content as C
 
 ROOT = pathlib.Path(__file__).parent
@@ -271,8 +271,19 @@ def clients():
 
 def news_cards(items):
     return '<ul class="news">' + "".join(
-        f'<li id="n-{iso}"><article class="news-card">{ph(img, title, "cover")}<time datetime="{iso}">{e(date)}</time>'
-        f'<h3>{e(title)}</h3><p>{e(text)}</p></article></li>' for iso, date, title, text, img in items) + "</ul>"
+        f'<li id="n-{n["slug"]}"><a class="news-card" href="news-{n["slug"]}.html">{ph(n["img"], n["title"], "cover")}'
+        f'<time datetime="{n["iso"]}">{e(n["date"])}</time><h3>{e(n["title"])}</h3><p>{e(n["lead"])}</p></a></li>'
+        for n in items) + "</ul>"
+
+
+def rich(text):
+    """Абзац новости: экранирует текст и превращает [текст](https://…) в ссылку."""
+    out, pos = [], 0
+    for m in re.finditer(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", text):
+        out.append(e(text[pos:m.start()]))
+        out.append(f'<a href="{e(m.group(2))}" target="_blank" rel="noopener">{e(m.group(1))}</a>')
+        pos = m.end()
+    return "".join(out) + e(text[pos:])
 
 
 def write(name, html_text):
@@ -856,6 +867,43 @@ def news():
 <section class="section"><div class="wrap">{news_cards(C.NEWS)}</div></section>
 """
     page("news.html", "Новости — Терра Электро", "Новости и выполненные проекты компании Терра Электро.", body, request=False)
+    for i, n in enumerate(C.NEWS):
+        news_article(n, C.NEWS[i - 1] if i else None, C.NEWS[i + 1] if i + 1 < len(C.NEWS) else None)
+
+
+def news_article(n, newer, older):
+    def block(b):
+        kind, val = b
+        if kind == "p":
+            return f"<p>{rich(val)}</p>"
+        if kind == "ul":
+            return "<ul>" + "".join(f"<li>{rich(x)}</li>" for x in val) + "</ul>"
+        if kind == "img":
+            return f'<figure class="article-img"><a href="img/{e(val)}" target="_blank">{ph(val, n["title"])}</a></figure>'
+        if kind == "gallery":
+            return '<ul class="article-gallery">' + "".join(
+                f'<li><a href="img/{e(f)}" target="_blank">{ph(f, n["title"], "cover")}</a></li>' for f in val) + "</ul>"
+        if kind == "video":
+            return (f'<div class="article-video"><iframe src="https://www.youtube-nocookie.com/embed/{e(val)}" title="{e(n["title"])}" '
+                    'loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>')
+        raise ValueError(f"неизвестный блок новости: {kind}")
+
+    def nav(item, rel, label):
+        if not item:
+            return "<span></span>"
+        return (f'<a class="article-nav-{rel}" href="news-{item["slug"]}.html" rel="{rel}">'
+                f'<small>{label}</small><span>{e(item["title"])}</span></a>')
+
+    body = page_head([("news.html", "Новости"), (None, n["title"])], n["title"]) + f"""
+<section class="section tight"><div class="wrap article">
+  <time class="article-date" datetime="{n["iso"]}">{e(n["date"])}</time>
+  <div class="ph cover article-cover"><img src="img/{e(n["img"])}" alt="{e(n["title"])}" decoding="async"></div>
+  <div class="prose">{"".join(block(b) for b in n["body"])}</div>
+  <nav class="article-nav" aria-label="Другие новости">{nav(older, "prev", "← Предыдущая")}{nav(newer, "next", "Следующая →")}</nav>
+  <a class="more" href="news.html">Все новости</a>
+</div></section>
+"""
+    page(f"news-{n['slug']}.html", f"{n['title']} — Терра Электро", n["lead"], body, current="news.html", request=False)
 
 
 def company():
