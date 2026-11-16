@@ -912,6 +912,60 @@ def news_article(n, newer, older):
     page(f"news-{n['slug']}.html", f"{n['title']} — Терра Электро", n["lead"], body, current="news.html", request=False)
 
 
+def partner_logo(p, full=False):
+    """Логотип партнёра в двух цветах: цветной в светлой теме, светлый в тёмной (переключает CSS)."""
+    light, dark = (p["logo_full"], p["logo_full_dark"]) if full else (p["logo"], p["logo_dark"])
+    return (f'<div class="ph partner-logo"><img class="on-light" src="img/{e(light)}" alt="{e(p["name"])}" decoding="async">'
+            f'<img class="on-dark" src="img/{e(dark)}" alt="" aria-hidden="true" decoding="async"></div>')
+
+
+def partners():
+    cards = "".join(
+        f'<li><a class="partner-card" href="partner-{p["slug"]}.html">{partner_logo(p)}'
+        f'<div><small>{e(p["status"])}</small><h3>{e(p["name"])}</h3><p>{e(p["short"])}</p><span class="go">Подробнее</span></div></a></li>'
+        for p in C.PARTNERS)
+    body = page_head([(None, "Партнёры")], "Партнёры",
+                     "Компании, с которыми мы работаем как интегратор: проектируем и внедряем решения на их оборудовании.") + f"""
+<section class="section"><div class="wrap">
+  <ul class="partners">{cards}</ul>
+</div></section>
+"""
+    page("partners.html", "Партнёры — Терра Электро", "Партнёры компании Терра Электро: РЕГЛАБ и другие.", body)
+    for p in C.PARTNERS:
+        partner_page(p)
+
+
+def partner_page(p):
+    about = "".join(f"<p>{e(x)}</p>" for x in p["about"])
+    facts = "".join(f"<li><b>{e(n)}</b><span>{e(t)}</span></li>" for n, t in p["facts"])
+    prods = "".join(f'<li><b>{e(n)}</b><span>{e(t)}</span></li>' for n, t in p["products"])
+    inds = "".join(f"<li>{e(x)}</li>" for x in p["industries"])
+    site = p["site"].split("//", 1)[-1]
+    body = page_head([("partners.html", "Партнёры"), (None, p["name"])], p["name"], p["status"]) + f"""
+<section class="section"><div class="wrap">
+  <div class="feature partner-intro">{partner_logo(p, full=True)}<div class="prose">
+    {about}
+    <p>Официальный сайт компании: <a href="{e(p["site"])}" target="_blank" rel="noopener">{e(site)}</a></p>
+  </div></div>
+</div></section>
+<section class="section band"><div class="wrap">
+  <ul class="partner-facts">{facts}</ul>
+</div></section>
+<section class="section"><div class="wrap">
+  <div class="section-head"><h2>Продукты и решения</h2></div>
+  <ul class="adv text partner-products">{prods}</ul>
+  <div class="section-head partner-sub"><h2>Отрасли</h2></div>
+  <ul class="partner-tags">{inds}</ul>
+</div></section>
+<section class="section band"><div class="wrap">
+  <div class="section-head"><h2>Работаем вместе</h2><p>{e(p["with_us"])}</p></div>
+  <a class="more" href="#request">Обсудить проект</a>
+</div></section>
+"""
+    page(f"partner-{p['slug']}.html", f"{p['name']} — партнёр Терра Электро", p["short"], body, current="partners.html",
+         request_title=f"Решения на базе {p['name']}")
+
+
 def company():
     comp = [("Более 50 мировых брендов", "От клемм и предохранителей до трансформаторов."),
             ("Собственное производство", "Изготовление оборудования, СМР, ПНР и сдача объектов в эксплуатацию."),
@@ -1101,7 +1155,7 @@ def main():
     shutil.copytree(ROOT / "static", DIST, ignore=shutil.ignore_patterns(".gitkeep"))
     build_assets()
     write_fetch_script()
-    for f in (home, sne_catalog, catalog, motors, brands, sgp, proizvodstvo, podstantsii, ktpp, nizkovoltnoye, inzhiniring, news, company, contacts, landing, login):
+    for f in (home, sne_catalog, catalog, motors, brands, sgp, proizvodstvo, podstantsii, ktpp, nizkovoltnoye, inzhiniring, news, partners, company, contacts, landing, login):
         f()
     for series in C.SNE_SERIES:
         sne_series(series)

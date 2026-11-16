@@ -202,6 +202,32 @@ img { max-width: 100%; }
 .logo-card small { display: block; color: var(--muted); font-weight: 400; }
 a.logo-card:hover { border-color: var(--ink); }
 
+/* ---------- Партнёры ---------- */
+.partner-logo { background: transparent; }
+.partner-logo img { object-fit: contain; }
+.partner-logo .on-dark { display: none; }
+:root[data-theme="dark"] .partner-logo .on-light { display: none; }
+:root[data-theme="dark"] .partner-logo .on-dark { display: block; }
+.partners { display: grid; gap: 16px; list-style: none; padding: 0; }
+.partner-card { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 32px; align-items: center; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); text-decoration: none; }
+.partner-card .partner-logo { aspect-ratio: 16 / 5; }
+.partner-card > div:last-child { display: grid; gap: 8px; }
+.partner-card small { color: var(--muted); font-size: .8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.partner-card h3 { font: 500 1.375rem/1.25 var(--font-display); }
+.partner-card p { color: var(--muted); }
+.partner-card .go { justify-self: start; color: var(--accent-text); font-weight: 600; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.partner-card:hover { border-color: var(--ink); }
+@media (max-width: 760px) { .partner-card { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px; } }
+.partner-intro { align-items: start; }
+.partner-intro .partner-logo { aspect-ratio: 2285 / 580; }
+.partner-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; list-style: none; padding: 0; }
+.partner-facts b { display: block; font: 500 clamp(2rem, 1.4rem + 2vw, 2.75rem)/1.1 var(--font-display); box-shadow: inset 0 -.18em 0 var(--accent); justify-self: start; width: fit-content; margin-bottom: 8px; }
+.partner-facts span { color: var(--muted); }
+@media (max-width: 640px) { .partner-facts { grid-template-columns: minmax(0, 1fr); } }
+.partner-sub { margin-top: 40px; }
+.partner-tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; }
+.partner-tags li { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: .9375rem; }
+
 /* ---------- Новости ---------- */
 .news { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 20px; list-style: none; padding: 0; }
 .news-card { display: grid; grid-template-rows: auto auto auto 1fr; gap: 10px; height: 100%; }
